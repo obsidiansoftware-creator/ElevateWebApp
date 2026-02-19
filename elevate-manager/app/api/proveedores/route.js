@@ -2,6 +2,44 @@ import { pool } from '@/lib/db'
 import jwt from 'jsonwebtoken'
 import { cookies } from 'next/headers'
 
+
+export async function GET() {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('token')?.value
+
+    if (!token) {
+      return new Response(
+        JSON.stringify({ success: true, data: [] }),
+        { status: 200 }
+      )
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const userId = decoded.id
+
+    const [rows] = await pool.query(
+      `SELECT id, razon_social, nombre_contacto, telefono, email, direccion, rfc, tipo_proveedor, estatus
+       FROM proveedores 
+       WHERE created_by = ?`,
+      [userId]
+    )
+
+    return new Response(
+      JSON.stringify({ success: true, data: rows }),
+      { status: 200 }
+    )
+
+  } catch (error) {
+    console.error(error)
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500 }
+    )
+  }
+}
+
+
 export async function POST(req) {
   try {
     const body = await req.json()
@@ -29,7 +67,6 @@ export async function POST(req) {
       cuenta_bancaria,
       clabe,
       notas,
-      servicios
     } = body
 
     if (!razon_social) {

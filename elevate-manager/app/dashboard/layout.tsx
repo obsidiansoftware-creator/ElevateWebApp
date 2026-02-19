@@ -76,6 +76,13 @@ export default function DashboardLayout({
 
             <nav className="space-y-3 text-sm">
               <button
+                onClick={() => navigate('/dashboard/principal')}
+                className="nav-btn"
+              >
+                ▸ Principal
+              </button>
+
+              <button
                 onClick={() => navigate('/dashboard/proyectos')}
                 className="nav-btn"
               >

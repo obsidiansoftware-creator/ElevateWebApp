@@ -7,50 +7,39 @@ import { useCliente } from '@/app/dashboard/contexts/ClientesContext'
 import { useProveedores } from '@/app/dashboard/contexts/ProveedoresContext'
 import type { Proyecto } from '@/app/dashboard/contexts/ProyectosContext'
 
-
-/* ===================================================== */
-
 interface ProyectoFormProps {
   proyecto: Proyecto | null
   onClose: () => void
   onSave: (proyecto: Proyecto) => void
 }
 
-/* ===================================================== */
-
-
 export default function ProyectoForm({
   proyecto,
   onClose,
   onSave
 }: ProyectoFormProps) {
-  
+
+  const { proveedores } = useProveedores()
+  const { clientes } = useCliente()
+
   const [nombre, setNombre] = useState(proyecto?.nombre || '')
   const [ubicacion, setUbicacion] = useState(proyecto?.ubicacion || '')
-  const [cliente, setCliente] = useState(proyecto?.cliente || '')
   const [contacto, setContacto] = useState(proyecto?.contacto || '')
   const [fechaInicio, setFechaInicio] = useState(proyecto?.fechaInicio || '')
   const [fechaEntrega, setFechaEntrega] = useState(proyecto?.fechaEntrega || '')
   const [descripcion, setDescripcion] = useState(proyecto?.descripcion || '')
-  const { proveedores } = useProveedores()
-  const { clientes } = useCliente() 
   const [tipo, setTipo] = useState<Proyecto['tipo']>(
-  proyecto?.tipo || 'Instalación'
+    proyecto?.tipo || 'Instalación'
   )
 
-  useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    document.addEventListener('keydown', esc)
-    return () => document.removeEventListener('keydown', esc)
-  }, [onClose])
+  const [clienteId, setClienteId] = useState<number | undefined>(
+    proyecto?.clienteId
+  )
 
- const [clienteId, setClienteId] = useState<number | undefined>(
-  proyecto?.clienteId
-)
+  const [proveedorId, setProveedorId] = useState<number | undefined>(
+    proyecto?.proveedorId
+  )
 
-const [proveedorId, setProveedorId] = useState<number | undefined>(
-  proyecto?.proveedorId
-)
   const autocompleteRef =
     useRef<google.maps.places.Autocomplete | null>(null)
 
@@ -59,49 +48,74 @@ const [proveedorId, setProveedorId] = useState<number | undefined>(
     libraries: ['places']
   })
 
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    document.addEventListener('keydown', esc)
+    return () => document.removeEventListener('keydown', esc)
+  }, [onClose])
+
   const handleSubmit = async () => {
-  if (!nombre || !ubicacion || !fechaInicio || !fechaEntrega) return
+    if (!nombre || !ubicacion || !fechaInicio || !fechaEntrega) {
+      alert('Completa los campos obligatorios')
+      return
+    }
 
-  const res = await fetch('/api/proyectos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      nombre,
-      ubicacion,
-      clienteId,
-      contacto,
-      fechaInicio,
-      fechaEntrega,
-      descripcion,
-      tipo,
-      proveedorId
-    })
-  })
+    try {
+      const res = await fetch('/api/proyectos', {
+        method: 'POST',
+        credentials: 'include', // 🔥 IMPORTANTE
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre,
+          ubicacion,
+          clienteId: clienteId || null,
+          contacto,
+          fechaInicio,
+          fechaEntrega,
+          descripcion,
+          tipo,
+          proveedorId: proveedorId || null
+        })
+      })
 
-  const data = await res.json()
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('Error response:', errorText)
+        alert('Error del servidor')
+        return
+      }
 
-  if (!data.success) {
-    alert('Error al guardar proyecto')
-    return
+      const data = await res.json()
+
+      if (!data.success) {
+        alert(data.error || 'Error al guardar proyecto')
+        return
+      }
+
+      onSave({
+        id: data.id,
+        nombre,
+        ubicacion,
+        cliente:
+          clientes.find(c => c.id === clienteId)?.razon_social || '',
+        contacto,
+        fechaInicio,
+        fechaEntrega,
+        descripcion,
+        tipo,
+        proveedorId,
+        clienteId
+      })
+
+      onClose()
+
+    } catch (err) {
+      console.error('Error completo:', err)
+      alert('Error inesperado al guardar')
+    }
   }
 
-  onSave({
-    id: data.id,
-    nombre,
-    ubicacion,
-    cliente: clientes.find(c => c.id === clienteId)?.razon_social || '',
-    contacto,
-    fechaInicio,
-    fechaEntrega,
-    descripcion,
-    tipo,
-    proveedorId,
-    clienteId
-  })
-}
-
-
-
+  
   return createPortal(
     <div
       className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center"
@@ -115,24 +129,32 @@ const [proveedorId, setProveedorId] = useState<number | undefined>(
           {proyecto ? 'Editar Proyecto' : 'Agregar Proyecto'}
         </h2>
 
-        <input className="form-input" placeholder="Nombre" value={nombre} onChange={e => setNombre(e.target.value)} />
+        <input className="form-input" placeholder="Nombre" value={nombre}
+          onChange={e => setNombre(e.target.value)} />
 
         {isLoaded && (
           <Autocomplete
             onLoad={a => (autocompleteRef.current = a)}
             onPlaceChanged={() => {
               const place = autocompleteRef.current?.getPlace()
-              if (place?.formatted_address) setUbicacion(place.formatted_address)
+              if (place?.formatted_address)
+                setUbicacion(place.formatted_address)
             }}
           >
-            <input className="form-input" placeholder="Ubicación" value={ubicacion} onChange={e => setUbicacion(e.target.value)} />
+            <input className="form-input" placeholder="Ubicación"
+              value={ubicacion}
+              onChange={e => setUbicacion(e.target.value)} />
           </Autocomplete>
         )}
 
         <select
           className="form-input"
           value={clienteId || ''}
-          onChange={e => setClienteId(Number(e.target.value))}
+          onChange={e =>
+            setClienteId(
+              e.target.value ? Number(e.target.value) : undefined
+            )
+          }
         >
           <option value="">Selecciona un cliente</option>
           {clientes.map(c => (
@@ -142,19 +164,32 @@ const [proveedorId, setProveedorId] = useState<number | undefined>(
           ))}
         </select>
 
-        <input className="form-input" placeholder="Contacto" value={contacto} onChange={e => setContacto(e.target.value)} />
+        <input className="form-input" placeholder="Contacto"
+          value={contacto}
+          onChange={e => setContacto(e.target.value)} />
 
         <div className="flex gap-2">
-          <input type="date" className="form-input" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
-          <input type="date" className="form-input" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} />
+          <input type="date" className="form-input"
+            value={fechaInicio}
+            onChange={e => setFechaInicio(e.target.value)} />
+          <input type="date" className="form-input"
+            value={fechaEntrega}
+            onChange={e => setFechaEntrega(e.target.value)} />
         </div>
 
-        <textarea className="form-input" rows={3} placeholder="Descripción" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
+        <textarea className="form-input" rows={3}
+          placeholder="Descripción"
+          value={descripcion}
+          onChange={e => setDescripcion(e.target.value)} />
 
         <select
           className="form-input"
-          value={proveedorId}
-          onChange={e => setProveedorId(Number(e.target.value))}
+          value={proveedorId || ''}
+          onChange={e =>
+            setProveedorId(
+              e.target.value ? Number(e.target.value) : undefined
+            )
+          }
         >
           <option value="">Selecciona un proveedor</option>
           {proveedores.map(p => (
@@ -162,15 +197,15 @@ const [proveedorId, setProveedorId] = useState<number | undefined>(
               {p.razon_social}
             </option>
           ))}
-
         </select>
 
-
         <div className="flex justify-end gap-2 mt-4">
-          <button className="bg-gray-700 px-4 py-2 rounded" onClick={onClose}>
+          <button className="bg-gray-700 px-4 py-2 rounded"
+            onClick={onClose}>
             Cancelar
           </button>
-          <button className="bg-cyan-500 px-4 py-2 rounded text-gray-900" onClick={handleSubmit}>
+          <button className="bg-cyan-500 px-4 py-2 rounded text-gray-900"
+            onClick={handleSubmit}>
             Guardar
           </button>
         </div>

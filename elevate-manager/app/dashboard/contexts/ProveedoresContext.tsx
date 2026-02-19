@@ -14,13 +14,12 @@ export interface Proveedor {
   email_facturacion?: string
   direccion?: string
   rfc?: string
-  tipo_proveedor?: string
+  tipo_proveedor?: ServicioProveedor[]
   banco?: string
   cuenta_bancaria?: string
   clabe?: string
   estatus: 'activo' | 'inactivo' | 'suspendido'
   notas?: string
-  servicios?: ServicioProveedor[]
   created_by: number
   updated_by?: number
   created_at: string

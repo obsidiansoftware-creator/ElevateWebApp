@@ -17,18 +17,11 @@ export default function ProveedorForm({ onClose }: ProveedorFormProps) {
   const [telefono, setTelefono] = useState('')
   const [email, setEmail] = useState('')
   const [rfc, setRfc] = useState('')
-  const [tipoProveedor, setTipoProveedor] = useState('')
+  const [tipoProveedor, setTipoProveedor] = useState<ServicioProveedor | ''>('')
   const [banco, setBanco] = useState('')
   const [cuentaBancaria, setCuentaBancaria] = useState('')
   const [clabe, setClabe] = useState('')
   const [notas, setNotas] = useState('')
-  const [servicios, setServicios] = useState<ServicioProveedor[]>([])
-
-  const toggleServicio = (s: ServicioProveedor) => {
-    setServicios(prev =>
-      prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
-    )
-  }
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -58,11 +51,11 @@ export default function ProveedorForm({ onClose }: ProveedorFormProps) {
           cuenta_bancaria: cuentaBancaria || null,
           clabe: clabe || null,
           notas: notas || null,
-          servicios
         })
       })
 
       const data = await res.json()
+
       if (!data.success) {
         alert('Error al guardar proveedor: ' + (data.error || 'desconocido'))
         return
@@ -76,18 +69,18 @@ export default function ProveedorForm({ onClose }: ProveedorFormProps) {
         telefono,
         email,
         rfc,
-        tipo_proveedor: tipoProveedor,
+        tipo_proveedor: tipoProveedor || undefined,
         banco,
         cuenta_bancaria: cuentaBancaria,
         clabe,
         notas,
-        servicios,
         estatus: 'activo',
         created_by: 0,
         created_at: new Date().toISOString()
       } as Proveedor)
 
       onClose()
+
     } catch (error: unknown) {
       if (error instanceof Error) {
         alert('Error al guardar proveedor: ' + error.message)
@@ -100,44 +93,119 @@ export default function ProveedorForm({ onClose }: ProveedorFormProps) {
   return createPortal(
     <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center">
       <div className="bg-gray-900 p-6 rounded-xl w-full max-w-4xl border border-emerald-500">
-        <h2 className="text-emerald-400 font-bold text-xl mb-4">Agregar Proveedor</h2>
+        <h2 className="text-emerald-400 font-bold text-xl mb-4">
+          Agregar Proveedor
+        </h2>
 
         {/* GRID DOS COLUMNAS */}
         <div className="grid grid-cols-2 gap-4">
+
           {/* Columna 1 */}
           <div className="flex flex-col gap-2">
-            <input className="form-input" placeholder="Razón Social" value={razonSocial} onChange={e => setRazonSocial(e.target.value)} />
-            <input className="form-input" placeholder="Nombre Contacto" value={nombreContacto} onChange={e => setNombreContacto(e.target.value)} />
-            <input className="form-input" placeholder="Dirección" value={direccion} onChange={e => setDireccion(e.target.value)} />
-            <input className="form-input" placeholder="Notas" value={notas} onChange={e => setNotas(e.target.value)} />
+            <input
+              className="form-input"
+              placeholder="Razón Social"
+              value={razonSocial}
+              onChange={e => setRazonSocial(e.target.value)}
+            />
+
+            <input
+              className="form-input"
+              placeholder="Nombre Contacto"
+              value={nombreContacto}
+              onChange={e => setNombreContacto(e.target.value)}
+            />
+
+            <input
+              className="form-input"
+              placeholder="Dirección"
+              value={direccion}
+              onChange={e => setDireccion(e.target.value)}
+            />
+
+            <textarea
+              className="form-input"
+              placeholder="Notas"
+              value={notas}
+              onChange={e => setNotas(e.target.value)}
+            />
           </div>
 
           {/* Columna 2 */}
           <div className="flex flex-col gap-2">
-            <input className="form-input" placeholder="Teléfono" value={telefono} onChange={e => setTelefono(e.target.value)} />
-            <input className="form-input" placeholder="Correo" value={email} onChange={e => setEmail(e.target.value)} />
-            <input className="form-input" placeholder="RFC" value={rfc} onChange={e => setRfc(e.target.value)} />
-            <input className="form-input" placeholder="Tipo Proveedor" value={tipoProveedor} onChange={e => setTipoProveedor(e.target.value)} />
-            <input className="form-input" placeholder="Banco" value={banco} onChange={e => setBanco(e.target.value)} />
-            <input className="form-input" placeholder="Cuenta Bancaria" value={cuentaBancaria} onChange={e => setCuentaBancaria(e.target.value)} />
-            <input className="form-input" placeholder="CLABE" value={clabe} onChange={e => setClabe(e.target.value)} />
-          </div>
-        </div>
 
-        {/* Servicios */}
-        <div className="flex gap-4 my-3 mt-4">
-          {(['Instalación', 'Ajuste'] as ServicioProveedor[]).map(s => (
-            <label key={s} className="flex items-center gap-2 text-cyan-300">
-              <input type="checkbox" checked={servicios.includes(s)} onChange={() => toggleServicio(s)} />
-              {s}
-            </label>
-          ))}
+            <input
+              className="form-input"
+              placeholder="Teléfono"
+              value={telefono}
+              onChange={e => setTelefono(e.target.value)}
+            />
+
+            <input
+              className="form-input"
+              placeholder="Correo"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+            />
+
+            <input
+              className="form-input"
+              placeholder="RFC"
+              value={rfc}
+              onChange={e => setRfc(e.target.value)}
+            />
+
+            {/* SELECT TIPO PROVEEDOR */}
+            <select
+              className="form-input"
+              value={tipoProveedor}
+              onChange={e =>
+                setTipoProveedor(e.target.value as ServicioProveedor)
+              }
+            >
+              <option value="">Selecciona tipo proveedor</option>
+              <option value="Instalación">Instalación</option>
+              <option value="Ajuste">Ajuste</option>
+            </select>
+
+            <input
+              className="form-input"
+              placeholder="Banco"
+              value={banco}
+              onChange={e => setBanco(e.target.value)}
+            />
+
+            <input
+              className="form-input"
+              placeholder="Cuenta Bancaria"
+              value={cuentaBancaria}
+              onChange={e => setCuentaBancaria(e.target.value)}
+            />
+
+            <input
+              className="form-input"
+              placeholder="CLABE"
+              value={clabe}
+              onChange={e => setClabe(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Botones */}
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={onClose} className="bg-gray-700 px-4 py-2 rounded">Cancelar</button>
-          <button onClick={handleSave} className="bg-emerald-500 px-4 py-2 rounded text-gray-900">Guardar</button>
+          <button
+            onClick={onClose}
+            className="bg-gray-700 px-4 py-2 rounded"
+          >
+            Cancelar
+          </button>
+
+          <button
+            onClick={handleSave}
+            className="bg-emerald-500 px-4 py-2 rounded text-gray-900"
+          >
+            Guardar
+          </button>
         </div>
       </div>
     </div>,

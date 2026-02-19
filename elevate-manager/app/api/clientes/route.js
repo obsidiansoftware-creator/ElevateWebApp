@@ -16,9 +16,9 @@ export async function GET() {
     const userId = decoded.id
 
     const [rows] = await pool.query(
-      `SELECT id, razon_social 
-       FROM clientes 
-       WHERE created_by = ?`,
+      `SELECT id, razon_social, nombre_contacto, telefono, email, direccion, rfc, tipo_cliente, estatus
+       FROM clientes_finales 
+       WHERE created_by = ?`, 
       [userId]
     )
 
