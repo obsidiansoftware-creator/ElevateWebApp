@@ -12,21 +12,34 @@ export default function ProyectosPage() {
   const [search, setSearch] = useState('')
 
   const filtered = proyectos.filter(
-    p =>
+    (p: Proyecto) =>
       p.nombre.toLowerCase().includes(search.toLowerCase()) ||
       p.cliente.toLowerCase().includes(search.toLowerCase()) ||
       p.ubicacion.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (!confirm('¿Seguro que quieres eliminar este proyecto?')) return
-    deleteProyecto(id)
+
+    const res = await fetch('/api/proyectos', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+
+    const data = await res.json()
+
+    if (data.success) {
+      deleteProyecto(id)
+    } else {
+      alert('Error al eliminar')
+    }
   }
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      
-      {/* Header */}
+
       <div className="flex flex-wrap gap-3 justify-between items-center">
         <h1 className="text-3xl font-bold text-cyan-400">
           GESTOR DE PROYECTOS
@@ -43,18 +56,16 @@ export default function ProyectosPage() {
         </button>
       </div>
 
-      {/* Buscador */}
       <input
         type="text"
         placeholder="Buscar por nombre, cliente o ubicación..."
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
         className="w-full md:w-1/3 px-3 py-2 rounded-lg border border-cyan-500 bg-gray-900 text-cyan-100"
       />
 
-      {/* Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(p => (
+        {filtered.map((p: Proyecto) => (
           <div
             key={p.id}
             className="bg-gray-800 p-4 rounded-xl border border-cyan-500 flex flex-col justify-between shadow-lg"
@@ -111,19 +122,56 @@ export default function ProyectosPage() {
         ))}
       </div>
 
-      {/* Form Modal */}
       {showForm && (
         <ProyectoForm
           proyecto={editing}
           onClose={() => setShowForm(false)}
-          onSave={proyectoGuardado => {
+          onSave={async (proyectoGuardado: Proyecto) => {
             if (editing) {
-              updateProyecto(proyectoGuardado)
+              const res = await fetch('/api/proyectos', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...editing, ...proyectoGuardado })
+              })
+
+              const data = await res.json()
+
+              if (data.success) {
+                // 🔹 Merge completo de campos para que no se pierda nada
+                const proyectoActualizado: Proyecto = {
+                  ...editing,
+                  ...proyectoGuardado,
+                  id: editing.id,           // asegura que el id sea el mismo
+                  cliente: proyectoGuardado.cliente ?? editing.cliente,
+                  contacto: proyectoGuardado.contacto ?? editing.contacto,
+                  tipo: proyectoGuardado.tipo ?? editing.tipo
+                }
+
+                updateProyecto(proyectoActualizado)
+              }
+
             } else {
-              addProyecto(proyectoGuardado)
+              const res = await fetch('/api/proyectos', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(proyectoGuardado)
+              })
+
+              const data = await res.json()
+
+              if (data.success) {
+                addProyecto({
+                  ...proyectoGuardado,
+                  id: Number(data.id)
+                })
+              }
             }
+
             setShowForm(false)
           }}
+
         />
       )}
     </div>

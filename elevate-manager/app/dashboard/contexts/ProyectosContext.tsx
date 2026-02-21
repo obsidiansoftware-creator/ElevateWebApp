@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 
+/* ========================= TYPES ========================= */
 
 export interface Proyecto {
   id: number
@@ -43,6 +44,7 @@ interface ProyectosContextType {
   deleteProyecto: (id: number) => void
 }
 
+/* ========================= CONTEXT ========================= */
 
 const ProyectosContext = createContext<ProyectosContextType | null>(null)
 
@@ -52,6 +54,8 @@ export function ProyectosProvider({
   children: React.ReactNode
 }) {
   const [proyectos, setProyectos] = useState<Proyecto[]>([])
+
+  /* ========================= FETCH ========================= */
 
   useEffect(() => {
     const fetchProyectos = async () => {
@@ -73,12 +77,13 @@ export function ProyectosProvider({
           fechaInicio: p.fecha_inicio ?? '',
           fechaEntrega: p.fecha_fin_estimada ?? '',
           descripcion: p.notas ?? '',
-          tipo: 'Instalación', // Ajusta si luego agregas campo tipo en DB
+          tipo: 'Instalación',
           proveedorId: p.proveedor_id ?? undefined,
           clienteId: p.cliente_final_id ?? undefined
         }))
 
         setProyectos(formatted)
+
       } catch (error) {
         console.error('Error cargando proyectos:', error)
       }
@@ -87,22 +92,44 @@ export function ProyectosProvider({
     fetchProyectos()
   }, [])
 
+  /* ========================= ADD ========================= */
 
-  const addProyecto = (p: Proyecto) => {
-    setProyectos((prev) => [...prev, p])
+    const addProyecto = (p: Proyecto) => {
+    const idNumerico = Number(p.id)
+
+    setProyectos((prev) => {
+      const exists = prev.some((x) => x.id === idNumerico)
+      if (exists) return prev
+
+      return [{ ...p, id: idNumerico }, ...prev]
+    })
   }
+
+
+  /* ========================= UPDATE ========================= */
 
   const updateProyecto = (p: Proyecto) => {
+  const idNumerico = Number(p.id)
+
     setProyectos((prev) =>
-      prev.map((x) => (x.id === p.id ? p : x))
+      prev.map((x) =>
+        x.id === idNumerico
+          ? { ...x, ...p, id: idNumerico }
+          : x
+      )
     )
   }
+
+
+  /* ========================= DELETE ========================= */
 
   const deleteProyecto = (id: number) => {
     setProyectos((prev) =>
       prev.filter((p) => p.id !== id)
     )
   }
+
+  /* ========================= PROVIDER ========================= */
 
   return (
     <ProyectosContext.Provider
@@ -118,6 +145,7 @@ export function ProyectosProvider({
   )
 }
 
+/* ========================= HOOK ========================= */
 
 export const useProyectos = () => {
   const ctx = useContext(ProyectosContext)

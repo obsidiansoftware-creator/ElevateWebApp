@@ -14,11 +14,21 @@ export default function MexicoMapClient() {
   const [projects, setProjects] = useState([])
 
   useEffect(() => {
-    fetch("/api/proyectos", { cache: "no-store" })
+    fetch("/api/proyectos", {
+      cache: "no-store",
+      credentials: "include" // 🔥 IMPORTANTE si usas JWT en cookies
+    })
       .then(res => res.json())
-      .then(data => setProjects(data))
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setProjects(data.data)
+        } else {
+          setProjects([])
+        }
+      })
       .catch(err => console.error(err))
   }, [])
+
 
   return (
     <MapContainer
