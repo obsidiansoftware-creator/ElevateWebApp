@@ -40,6 +40,10 @@ export default function ProyectoForm({
     proyecto?.proveedorId
   )
 
+  // 🔥 NUEVO: estados para lat y lng
+  const [lat, setLat] = useState<number | null>(proyecto?.lat || null)
+  const [lng, setLng] = useState<number | null>(proyecto?.lng || null)
+
   const autocompleteRef =
     useRef<google.maps.places.Autocomplete | null>(null)
 
@@ -54,68 +58,32 @@ export default function ProyectoForm({
     return () => document.removeEventListener('keydown', esc)
   }, [onClose])
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!nombre || !ubicacion || !fechaInicio || !fechaEntrega) {
       alert('Completa los campos obligatorios')
       return
     }
 
-    try {
-      const res = await fetch('/api/proyectos', {
-        method: 'POST',
-        credentials: 'include', // 🔥 IMPORTANTE
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-          ubicacion,
-          clienteId: clienteId || null,
-          contacto,
-          fechaInicio,
-          fechaEntrega,
-          descripcion,
-          tipo,
-          proveedorId: proveedorId || null
-        })
-      })
+    onSave({
+      id: proyecto?.id ?? Date.now(),
+      nombre,
+      ubicacion,
+      cliente:
+        clientes.find(c => c.id === clienteId)?.razon_social || '',
+      contacto,
+      fechaInicio,
+      fechaEntrega,
+      descripcion,
+      tipo,
+      proveedorId,
+      clienteId,
+      lat,
+      lng
+    })
 
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error('Error response:', errorText)
-        alert('Error del servidor')
-        return
-      }
-
-      const data = await res.json()
-
-      if (!data.success) {
-        alert(data.error || 'Error al guardar proyecto')
-        return
-      }
-
-      onSave({
-        id: data.id,
-        nombre,
-        ubicacion,
-        cliente:
-          clientes.find(c => c.id === clienteId)?.razon_social || '',
-        contacto,
-        fechaInicio,
-        fechaEntrega,
-        descripcion,
-        tipo,
-        proveedorId,
-        clienteId
-      })
-
-      onClose()
-
-    } catch (err) {
-      console.error('Error completo:', err)
-      alert('Error inesperado al guardar')
-    }
+    onClose()
   }
 
-  
   return createPortal(
     <div
       className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center"
@@ -129,21 +97,36 @@ export default function ProyectoForm({
           {proyecto ? 'Editar Proyecto' : 'Agregar Proyecto'}
         </h2>
 
-        <input className="form-input" placeholder="Nombre" value={nombre}
-          onChange={e => setNombre(e.target.value)} />
+        <input
+          className="form-input"
+          placeholder="Nombre"
+          value={nombre}
+          onChange={e => setNombre(e.target.value)}
+        />
 
         {isLoaded && (
           <Autocomplete
             onLoad={a => (autocompleteRef.current = a)}
             onPlaceChanged={() => {
               const place = autocompleteRef.current?.getPlace()
-              if (place?.formatted_address)
+
+              if (place?.formatted_address) {
                 setUbicacion(place.formatted_address)
+              }
+
+              // 🔥 AQUÍ EXTRAEMOS LAT Y LNG
+              if (place?.geometry?.location) {
+                setLat(place.geometry.location.lat())
+                setLng(place.geometry.location.lng())
+              }
             }}
           >
-            <input className="form-input" placeholder="Ubicación"
+            <input
+              className="form-input"
+              placeholder="Ubicación"
               value={ubicacion}
-              onChange={e => setUbicacion(e.target.value)} />
+              onChange={e => setUbicacion(e.target.value)}
+            />
           </Autocomplete>
         )}
 
@@ -164,23 +147,35 @@ export default function ProyectoForm({
           ))}
         </select>
 
-        <input className="form-input" placeholder="Contacto"
+        <input
+          className="form-input"
+          placeholder="Contacto"
           value={contacto}
-          onChange={e => setContacto(e.target.value)} />
+          onChange={e => setContacto(e.target.value)}
+        />
 
         <div className="flex gap-2">
-          <input type="date" className="form-input"
+          <input
+            type="date"
+            className="form-input"
             value={fechaInicio}
-            onChange={e => setFechaInicio(e.target.value)} />
-          <input type="date" className="form-input"
+            onChange={e => setFechaInicio(e.target.value)}
+          />
+          <input
+            type="date"
+            className="form-input"
             value={fechaEntrega}
-            onChange={e => setFechaEntrega(e.target.value)} />
+            onChange={e => setFechaEntrega(e.target.value)}
+          />
         </div>
 
-        <textarea className="form-input" rows={3}
+        <textarea
+          className="form-input"
+          rows={3}
           placeholder="Descripción"
           value={descripcion}
-          onChange={e => setDescripcion(e.target.value)} />
+          onChange={e => setDescripcion(e.target.value)}
+        />
 
         <select
           className="form-input"
@@ -200,12 +195,19 @@ export default function ProyectoForm({
         </select>
 
         <div className="flex justify-end gap-2 mt-4">
-          <button className="bg-gray-700 px-4 py-2 rounded"
-            onClick={onClose}>
+          <button
+            type="button"
+            className="bg-gray-700 px-4 py-2 rounded"
+            onClick={onClose}
+          >
             Cancelar
           </button>
-          <button className="bg-cyan-500 px-4 py-2 rounded text-gray-900"
-            onClick={handleSubmit}>
+
+          <button
+            type="button"
+            className="bg-cyan-500 px-4 py-2 rounded text-gray-900"
+            onClick={handleSubmit}
+          >
             Guardar
           </button>
         </div>

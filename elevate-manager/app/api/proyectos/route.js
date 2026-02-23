@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 
 /* ===================== AUTH ===================== */
 async function getUserId() {
-  const cookieStore = await cookies() // 🔥 FIX AQUÍ
+  const cookieStore = await cookies()
   const token = cookieStore.get('token')?.value
 
   if (!token) {
@@ -71,16 +71,26 @@ export async function POST(req) {
       fechaInicio,
       fechaEntrega,
       descripcion,
-      proveedorId
+      proveedorId,
+      lat,
+      lng
     } = body
+
+    if (!nombre) {
+      return Response.json(
+        { success: false, error: 'El nombre es obligatorio' },
+        { status: 400 }
+      )
+    }
 
     const [result] = await pool.query(
       `
       INSERT INTO proyectos
       (nombre, cliente_final_id, proveedor_id, direccion_obra,
        fecha_inicio, fecha_fin_estimada, notas,
+       lat, lng,
        created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         nombre,
@@ -90,6 +100,8 @@ export async function POST(req) {
         fechaInicio || null,
         fechaEntrega || null,
         descripcion || null,
+        lat ?? null,
+        lng ?? null,
         userId
       ]
     )
@@ -121,8 +133,17 @@ export async function PUT(req) {
       fechaInicio,
       fechaEntrega,
       descripcion,
-      proveedorId
+      proveedorId,
+      lat,
+      lng
     } = body
+
+    if (!id) {
+      return Response.json(
+        { success: false, error: 'ID requerido' },
+        { status: 400 }
+      )
+    }
 
     await pool.query(
       `
@@ -133,7 +154,9 @@ export async function PUT(req) {
           direccion_obra = ?,
           fecha_inicio = ?,
           fecha_fin_estimada = ?,
-          notas = ?
+          notas = ?,
+          lat = ?,
+          lng = ?
       WHERE id = ?
       AND created_by = ?
       AND deleted_at IS NULL
@@ -146,6 +169,8 @@ export async function PUT(req) {
         fechaInicio || null,
         fechaEntrega || null,
         descripcion || null,
+        lat ?? null,
+        lng ?? null,
         id,
         userId
       ]
@@ -166,6 +191,13 @@ export async function DELETE(req) {
   try {
     const userId = await getUserId()
     const { id } = await req.json()
+
+    if (!id) {
+      return Response.json(
+        { success: false, error: 'ID requerido' },
+        { status: 400 }
+      )
+    }
 
     await pool.query(
       `

@@ -16,6 +16,8 @@ export interface Proyecto {
   tipo: 'Instalación' | 'Ajuste' | 'Otro'
   proveedorId?: number
   clienteId?: number
+  lat?: number | null
+  lng?: number | null
 }
 
 interface ProyectoDB {
@@ -30,6 +32,7 @@ interface ProyectoDB {
   cliente_final_id: number | null
   proveedor_id: number | null
   cliente_nombre: string | null
+  
 }
 
 interface GetProyectosResponse {
@@ -79,7 +82,9 @@ export function ProyectosProvider({
           descripcion: p.notas ?? '',
           tipo: 'Instalación',
           proveedorId: p.proveedor_id ?? undefined,
-          clienteId: p.cliente_final_id ?? undefined
+          clienteId: p.cliente_final_id ?? undefined,
+          lat: p.lat ?? null,
+          lng: p.lng ?? null,
         }))
 
         setProyectos(formatted)
