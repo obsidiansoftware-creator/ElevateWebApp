@@ -10,7 +10,6 @@ export default function ProveedoresPage() {
   const [search, setSearch] = useState('')
   const [showProveedorForm, setShowProveedorForm] = useState(false)
 
-  // Filtrado por razón social, contacto o RFC
   const filtered = proveedores.filter(p =>
     p.razon_social.toLowerCase().includes(search.toLowerCase()) ||
     p.nombre_contacto?.toLowerCase().includes(search.toLowerCase()) ||

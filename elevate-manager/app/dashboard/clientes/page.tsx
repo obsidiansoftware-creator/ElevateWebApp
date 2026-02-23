@@ -56,7 +56,7 @@ export default function ClientesPage() {
               <p className="text-cyan-400 text-sm">
                 {c.nombre_contacto}
               </p>
-
+          
               <p className="text-cyan-400 text-sm">
                 {c.telefono}
               </p>
