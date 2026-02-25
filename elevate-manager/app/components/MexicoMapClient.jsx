@@ -1,5 +1,5 @@
   "use client"
-
+  
   import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from "react-leaflet"
   import { useEffect, useState } from "react"
   import L from "leaflet"
@@ -14,7 +14,7 @@
     const [projects, setProjects] = useState([])
 
     useEffect(() => {
-      fetch("/api/proyectos", {
+      fetch("/apiCliente/proyectos", {
         cache: "no-store",
         credentials: "include" // 🔥 IMPORTANTE si usas JWT en cookies
       })

@@ -76,7 +76,7 @@ body {
 
 /* PUERTAS */
 .door {
-  position: absolute;
+  position: fixed;
   top: 0;
   width: 50%;
   height: 100%;
@@ -86,7 +86,7 @@ body {
     #020617 60%,
     #000
   );
-  z-index: 20;
+  z-index: 50;
   transition: transform 1.2s ease-in-out;
 }
 
@@ -196,4 +196,11 @@ body {
 
 .pac-item + .pac-item {
   border-top: 1px solid #1f2937 !important; /* gray-800 */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
 }

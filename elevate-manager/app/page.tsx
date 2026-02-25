@@ -25,7 +25,7 @@ export default function LoginPage() {
     if (moving) return
     setError('')
 
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/apiCliente/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -49,7 +49,7 @@ export default function LoginPage() {
     }, 300)
 
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push('/dashboardCliente')
     }, 900)
   }
 
