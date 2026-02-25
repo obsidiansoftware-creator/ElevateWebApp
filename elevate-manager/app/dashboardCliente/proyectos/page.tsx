@@ -67,7 +67,7 @@ export default function ProyectosPage() {
         color: string
         border: string
         priority: number
-      } {
+      } { 
         const hoy = new Date()
         const inicio = new Date(fechaInicio)
         const fin = new Date(fechaEntrega)
@@ -102,6 +102,16 @@ export default function ProyectosPage() {
         }
       }
 
+  const getTipoColor = (tipo?: string | null) => {
+    if (!tipo) return 'bg-gray-300'
+
+    const t = tipo.toLowerCase().trim()
+
+    if (t.includes('instal')) return 'bg-red-400'
+    if (t.includes('ajust')) return 'bg-blue-400'
+
+    return 'bg-green-400'
+  }
     
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -146,6 +156,7 @@ export default function ProyectosPage() {
     </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
       {processedProyectos.map((p) => {
+        console.log("TIPO PROVEEDOR:", p.tipo_proveedor)
         const status = p.status
         return (
           <div
@@ -184,9 +195,14 @@ export default function ProyectosPage() {
                 {p.descripcion}
               </p>
 
-              <span className="inline-block mt-2 text-xs px-2 py-1 rounded bg-cyan-700 text-white">
-                {p.tipo}
-              </span>
+              <span
+              className={`
+                inline-block mt-2 text-xs px-2 py-1 rounded text-gray-900 font-medium
+                ${getTipoColor(p.tipo_proveedor)}
+              `}
+            >
+              {p.tipo_proveedor ?? 'Otro'}
+            </span>
             </div>
 
             <div className="flex gap-2 mt-4">
@@ -234,7 +250,7 @@ export default function ProyectosPage() {
                   id: editing.id,           // asegura que el id sea el mismo
                   cliente: proyectoGuardado.cliente ?? editing.cliente,
                   contacto: proyectoGuardado.contacto ?? editing.contacto,
-                  tipo: proyectoGuardado.tipo ?? editing.tipo
+                  tipo_proveedor: proyectoGuardado.tipo_proveedor ?? editing.tipo_proveedor
                 }
 
                 updateProyecto(proyectoActualizado)

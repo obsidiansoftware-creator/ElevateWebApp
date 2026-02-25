@@ -29,21 +29,23 @@ export async function GET() {
 
     const [rows] = await pool.query(
       `
-      SELECT 
-        p.id,
-        p.nombre,
-        p.direccion_obra,
-        p.lat,
-        p.lng,
-        p.fecha_inicio,
-        p.fecha_fin_estimada,
-        p.notas,
-        p.cliente_final_id,
-        p.proveedor_id
-      FROM proyectos p
-      WHERE p.created_by = ?
-      AND p.deleted_at IS NULL
-      ORDER BY p.id DESC
+     SELECT 
+    p.id,
+    p.nombre,
+    p.direccion_obra,
+    p.lat,
+    p.lng,
+    p.fecha_inicio,
+    p.fecha_fin_estimada,
+    p.notas,
+    p.cliente_final_id,
+    p.proveedor_id,
+    pr.tipo_proveedor
+  FROM proyectos p
+  LEFT JOIN proveedores pr ON pr.id = p.proveedor_id
+  WHERE p.created_by = ?
+  AND p.deleted_at IS NULL
+  ORDER BY p.id DESC
       `,
       [userId]
     )

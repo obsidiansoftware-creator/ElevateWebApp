@@ -11,15 +11,8 @@ const tipos = [
   { key: 'Otro', color: 'bg-green-400' },
 ]
 
-const tipoColors: Record<Proyecto['tipo'], string> = {
-  Instalación: 'bg-red-400',
-  Ajuste: 'bg-blue-400',
-  Otro: 'bg-green-400',
-}
-
 export default function CalendarioPage() {
   const { proyectos } = useProyectos()
-
 
   const today = new Date()
   const [month, setMonth] = useState(today.getMonth())
@@ -47,14 +40,44 @@ export default function CalendarioPage() {
     return () => document.removeEventListener('keydown', onEsc)
   }, [])
 
+  /* ========================= COLOR DINÁMICO ========================= */
+
+  const getTipoNormalizado = (tipo?: string | null) => {
+    if (!tipo) return 'Otro'
+
+    const t = tipo.toLowerCase().trim()
+
+    if (t.includes('instal')) return 'Instalación'
+    if (t.includes('ajust')) return 'Ajuste'
+
+    return 'Otro'
+  }
+
+  const getTipoColor = (tipo?: string | null) => {
+    const normalizado = getTipoNormalizado(tipo)
+
+    if (normalizado === 'Instalación') return 'bg-red-400'
+    if (normalizado === 'Ajuste') return 'bg-blue-400'
+
+    return 'bg-green-400'
+  }
+
+  /* ========================= FILTRADO ========================= */
+
   const getProjectsForDay = (day: number) =>
     proyectos.filter(p => {
-      if (!filtros[p.tipo]) return false
+      const tipoNormalizado = getTipoNormalizado(p.tipo_proveedor)
+
+      if (!filtros[tipoNormalizado]) return false
+
       const start = new Date(p.fechaInicio)
       const end = new Date(p.fechaEntrega)
       const d = new Date(year, month, day)
+
       return d >= start && d <= end
     })
+
+  /* ========================= CAMBIO MES ========================= */
 
   const changeMonth = (dir: -1 | 1) => {
     setMonth(prev => {
@@ -74,20 +97,13 @@ export default function CalendarioPage() {
     month: 'long',
     year: 'numeric',
   })
-  
-    const getTipoColor = (tipo?: string) => {
-    if (!tipo) return 'bg-gray-300'
 
-    const t = tipo.toLowerCase()
+  /* ========================= RENDER ========================= */
 
-    if (t.includes('instal')) return 'bg-red-400'
-    if (t.includes('ajust')) return 'bg-blue-400'
-
-    return 'bg-green-400'
-    }
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* ================= HEADER ================= */}
+      
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-cyan-400">
@@ -112,7 +128,7 @@ export default function CalendarioPage() {
         </div>
       </div>
 
-      {/* ================= FILTROS ================= */}
+      {/* FILTROS */}
       <div className="flex gap-3 flex-wrap">
         {tipos.map(t => (
           <button
@@ -132,14 +148,14 @@ export default function CalendarioPage() {
         ))}
       </div>
 
-      {/* ================= DÍAS ================= */}
+      {/* DÍAS */}
       <div className="grid grid-cols-7 gap-2 text-center text-cyan-300 text-sm font-semibold">
         {weekDays.map(d => (
           <div key={d}>{d}</div>
         ))}
       </div>
 
-      {/* ================= CALENDARIO ================= */}
+      {/* CALENDARIO */}
       <div className="grid grid-cols-7 gap-2">
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
           const projects = getProjectsForDay(day)
@@ -169,7 +185,7 @@ export default function CalendarioPage() {
                   onClick={() => setSelected(p)}
                   className={`
                     cursor-pointer text-[11px] px-2 py-0.5 rounded mb-1 truncate
-                    ${getTipoColor(p.proveedor_tipo)}
+                    ${getTipoColor(p.tipo_proveedor)}
                     text-gray-900 font-medium
                   `}
                 >
@@ -181,7 +197,7 @@ export default function CalendarioPage() {
         })}
       </div>
 
-      {/* ================= MODAL DETALLE ================= */}
+      {/* MODAL */}
       {selected && (
         <div
           className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4"
@@ -225,4 +241,3 @@ export default function CalendarioPage() {
     </div>
   )
 }
-  
