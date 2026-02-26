@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-// ✅ CONTEXT PROVIDERS
 import { ProyectosProvider } from './contexts/ProyectosContext'
 import { ProveedoresProvider } from './contexts/ProveedoresContext'
 import { ClientesProvider } from './contexts/ClientesContext'
@@ -17,6 +16,7 @@ export default function DashboardLayout({
 
   const [doorsClosed, setDoorsClosed] = useState(true)
   const [shouldAnimateDoors, setShouldAnimateDoors] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // 🔹 ABRIR PUERTAS SOLO CUANDO SE PIDA (login / logout)
   useEffect(() => {
@@ -33,6 +33,7 @@ export default function DashboardLayout({
   // 🔹 NAVEGACIÓN NORMAL (SIN PUERTAS)
   const navigate = (href: string) => {
     router.push(href)
+    setSidebarOpen(false)
   }
 
   // 🔹 LOGOUT (CON PUERTAS)
@@ -55,9 +56,30 @@ export default function DashboardLayout({
           <div className={`door left ${doorsClosed ? 'close' : ''}`} />
           <div className={`door right ${doorsClosed ? 'close' : ''}`} />
 
+          {/* OVERLAY (solo móvil) */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
           {/* SIDEBAR */}
-          <aside className="w-64 bg-black/80 border-r border-cyan-500/30 p-6 backdrop-blur-xl z-10">
-            <div className="flex items-center justify-between mb-8">
+          <aside
+            className={`
+              fixed md:relative
+              z-30
+              min-h-screen md:min-h-screen
+              w-64
+              bg-black/90
+              border-r border-cyan-500/30
+              p-6
+              backdrop-blur-xl
+              transform transition-transform duration-300
+              ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+              md:translate-x-0
+            `}
+          >            <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold tracking-widest text-cyan-400">
                 ELEVATOR
                 <span className="block text-xs tracking-[0.3em] text-cyan-300">
@@ -111,6 +133,20 @@ export default function DashboardLayout({
               </button>
 
               <button
+                onClick={() => navigate('/dashboard/cotizaciones')}
+                className="nav-btn"
+              >
+                ▸ Cotizaciones
+              </button>
+              
+              <button
+                onClick={() => navigate('/dashboard/contratos')}
+                className="nav-btn"
+              >
+                ▸ Contratos
+              </button>
+
+              <button
                 onClick={() => navigate('/dashboard/elevadores')}
                 className="nav-btn"
               >
@@ -128,8 +164,15 @@ export default function DashboardLayout({
 
           {/* CONTENIDO */}
           <main className="flex-1 p-8 relative z-10">
+            {/* BOTÓN MÓVIL */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden mb-4 text-cyan-400 text-2xl"
+            >
+              ☰
+            </button>
             <h1 className="text-3xl font-bold mb-6 tracking-widest text-cyan-400">
-              PANEL DE ADMINISTRACIÓN
+              ELEVATE SOFT
             </h1>
 
             <section className="bg-black/70 border border-cyan-500/30 rounded-xl p-6 backdrop-blur-xl">

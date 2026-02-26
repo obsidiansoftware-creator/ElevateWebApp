@@ -1,5 +1,6 @@
 'use client'
 
+import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useCliente } from '@/app/dashboard/contexts/ClientesContext'

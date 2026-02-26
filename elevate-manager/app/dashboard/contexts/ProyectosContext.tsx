@@ -13,11 +13,12 @@ export interface Proyecto {
   fechaInicio: string
   fechaEntrega: string
   descripcion: string
-  tipo: 'Instalación' | 'Ajuste' | 'Otro'
   proveedorId?: number
   clienteId?: number
+  tipo?: string
   lat?: number | null
   lng?: number | null
+  tipo_proveedor?: string | null
 }
 
 interface ProyectoDB {
@@ -32,7 +33,7 @@ interface ProyectoDB {
   cliente_final_id: number | null
   proveedor_id: number | null
   cliente_nombre: string | null
-  
+  tipo_proveedor?: string | null
 }
 
 interface GetProyectosResponse {
@@ -80,7 +81,7 @@ export function ProyectosProvider({
           fechaInicio: p.fecha_inicio ?? '',
           fechaEntrega: p.fecha_fin_estimada ?? '',
           descripcion: p.notas ?? '',
-          tipo: 'Instalación',
+          tipo_proveedor: p.tipo_proveedor ?? null,
           proveedorId: p.proveedor_id ?? undefined,
           clienteId: p.cliente_final_id ?? undefined,
           lat: p.lat ?? null,

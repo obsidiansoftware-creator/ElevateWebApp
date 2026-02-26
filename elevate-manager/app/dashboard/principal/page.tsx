@@ -83,7 +83,7 @@ export default function PrincipalPage() {
       <div className="mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-cyan-400 tracking-wide">
-            Dashboard Gestión de Elevadores
+            Panel Principal Elevate
           </h1>
           <p className="text-gray-400 mt-2">
             Monitoreo operativo en tiempo real

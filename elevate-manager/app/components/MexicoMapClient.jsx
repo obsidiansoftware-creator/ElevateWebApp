@@ -14,7 +14,7 @@
     const [projects, setProjects] = useState([])
 
     useEffect(() => {
-      fetch("/apiCliente/proyectos", {
+      fetch("/api/proyectos", {
         cache: "no-store",
         credentials: "include" // 🔥 IMPORTANTE si usas JWT en cookies
       })

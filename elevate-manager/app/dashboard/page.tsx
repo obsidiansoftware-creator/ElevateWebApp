@@ -1,7 +1,5 @@
-export default function DashboardPage() {
-  return (
-    <p className="text-gray-600">
-      Bienvenido al sistema de gestión de elevadores.
-    </p>
-  )
+import { redirect } from 'next/navigation';
+
+export default function DashboardClientePage() {
+  redirect('/dashboard/principal'); 
 }
