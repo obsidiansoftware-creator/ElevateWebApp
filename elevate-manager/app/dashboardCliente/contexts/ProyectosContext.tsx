@@ -15,6 +15,7 @@ export interface Proyecto {
   descripcion: string
   proveedorId?: number
   clienteId?: number
+  tipo?: string
   lat?: number | null
   lng?: number | null
   tipo_proveedor?: string | null
