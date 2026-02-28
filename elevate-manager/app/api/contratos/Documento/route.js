@@ -1,11 +1,11 @@
-import { db } from "@/lib/db"
+import { pool } from "@/lib/db"
 import { NextResponse } from "next/server"
 
 export async function POST(req) {
   try {
     const { contratoId, nombre, url } = await req.json()
 
-    await db.query(
+    await pool.query(
       `INSERT INTO documentos_contrato (contrato_id, nombre, url)
        VALUES (?, ?, ?)`,
       [contratoId, nombre, url]
