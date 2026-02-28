@@ -1,11 +1,11 @@
-import { db } from "@/lib/db"
+import { pool } from "@/lib/db"
 import { NextResponse } from "next/server"
 
 export async function POST(req) {
   try {
     const { cotizacionId } = await req.json()
 
-    const [cotizacionRows] = await db.query(
+    const [cotizacionRows] = await pool.query(
       "SELECT * FROM cotizaciones WHERE id = ?",
       [cotizacionId]
     )
