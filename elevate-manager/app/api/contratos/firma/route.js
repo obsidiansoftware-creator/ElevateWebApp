@@ -1,11 +1,11 @@
-import { db } from "@/lib/db"
+import { pool } from "@/lib/db"
 import { NextResponse } from "next/server"
 
 export async function POST(req) {
   try {
     const { contratoId, firma } = await req.json()
 
-    await db.query(
+    await pool.query(
       `UPDATE contratos 
        SET firma_cliente = ?, 
            firmado_en = NOW(), 
