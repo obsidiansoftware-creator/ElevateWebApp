@@ -17,9 +17,22 @@ export default function ContratosPage() {
   const [selected, setSelected] = useState<Contrato | null>(null)
 
   const fetchContratos = async () => {
-    const res = await fetch("/api/contratos")
-    const data = await res.json()
-    setContratos(data)
+    try {
+      const res = await fetch("/api/contratos")
+      const data = await res.json()
+
+      if (!res.ok) {
+        console.error("API Error:", data)
+        setContratos([])
+        return
+      }
+
+      setContratos(Array.isArray(data) ? data : [])
+
+    } catch (error) {
+      console.error("Fetch error:", error)
+      setContratos([])
+    }
   }
 
   useEffect(() => {
@@ -46,7 +59,7 @@ export default function ContratosPage() {
       <div className="mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-cyan-400 tracking-wide">
-            📄 Gestión de Contratos
+           Gestión de Contratos
           </h1>
           <p className="text-gray-400 mt-1">
             Administra y activa contratos firmados
@@ -74,7 +87,9 @@ export default function ContratosPage() {
               >
                 <td className="p-4 font-medium">{c.numero}</td>
                 <td className="p-4">{c.cliente_nombre}</td>
-                <td className="p-4">${c.total.toLocaleString()}</td>
+                <td className="p-4">
+                ${Number(c.total || 0).toLocaleString()}
+              </td>
                 <td className="p-4">
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-zinc-700 text-cyan-300">
                     {c.estado}

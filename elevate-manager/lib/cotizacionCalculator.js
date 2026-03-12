@@ -1,7 +1,6 @@
 export function calcularCosto(data) {
   let costo = 0
 
-  // Base por tipo
   const baseTipo = {
     HIDRAULICO: 400000,
     TRACCION: 550000,
@@ -9,18 +8,15 @@ export function calcularCosto(data) {
     MONTACARGAS: 700000,
   }
 
+  const capacidad = Number(data.capacidad) || 0
+  const paradas = Number(data.paradas) || 0
+  const velocidad = Number(data.velocidad) || 0
+
   costo += baseTipo[data.tipo] || 0
+  costo += capacidad * 120
+  costo += paradas * 25000
+  costo += velocidad * 50000
 
-  // Capacidad
-  costo += data.capacidad * 120
-
-  // Paradas
-  costo += data.paradas * 25000
-
-  // Velocidad
-  costo += data.velocidad * 50000
-
-  // Acabados
   if (data.acabados === "LUJO") costo += 80000
   if (data.acabados === "PREMIUM") costo += 150000
 

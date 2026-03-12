@@ -10,7 +10,7 @@ export async function POST(req) {
 
   const numero = "COT-" + Date.now()
 
-  await pool.query(
+  const [result] = await pool.query(
     `INSERT INTO cotizaciones
     (numero, cliente_id, capacidad, paradas, velocidad, tipo, acabados, costo_base, margen, precio_final)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -28,5 +28,9 @@ export async function POST(req) {
     ]
   )
 
-  return NextResponse.json({ numero, precioFinal })
+  return NextResponse.json({
+    id: result.insertId,   
+    numero,
+    precioFinal,
+  })
 }

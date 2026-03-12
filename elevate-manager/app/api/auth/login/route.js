@@ -69,12 +69,11 @@ export async function POST(req) {
       }
     })
 
-    // 🍪 Guardar cookie
     response.cookies.set('token', token, {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
-      secure: false // ⚠ localhost
+      secure: false 
     })
 
     return response

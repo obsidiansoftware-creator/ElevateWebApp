@@ -147,6 +147,20 @@ export default function DashboardLayout({
               </button>
 
               <button
+                onClick={() => navigate('/dashboard/monitoreo')}
+                className="nav-btn"
+              >
+                ▸ Monitoreo
+              </button>
+
+              <button
+                onClick={() => navigate('/dashboard/tecnico')}
+                className="nav-btn"
+              >
+                ▸ Tecnicos
+              </button>
+
+              <button
                 onClick={() => navigate('/dashboard/elevadores')}
                 className="nav-btn"
               >

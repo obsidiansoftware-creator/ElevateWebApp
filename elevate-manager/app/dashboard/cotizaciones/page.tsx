@@ -2,25 +2,10 @@
 
 import { useState } from "react"
 
-type FormCotizacion = {
-  cliente_id: string
-  capacidad: number
-  paradas: number
-  velocidad: number
-  tipo: string
-  acabados: string
-  margen: number
-}
-
-type ResultadoCotizacion = {
-  numero: string
-  precioFinal: number
-}
-
 export default function CotizacionesPage() {
 
   const [form, setForm] = useState<FormCotizacion>({
-    cliente_id: "",
+    cliente_id: 0,
     capacidad: 630,
     paradas: 5,
     velocidad: 1,
@@ -35,7 +20,7 @@ export default function CotizacionesPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target
-
+    
     if (["capacidad", "paradas", "velocidad", "margen"].includes(name)) {
       setForm({
         ...form,
@@ -46,6 +31,12 @@ export default function CotizacionesPage() {
         ...form,
         [name]: value,
       })
+    }
+    if (name === "cliente_id") {
+        setForm({
+            ...form,
+            cliente_id: Number(value),
+        })
     }
   }
 
@@ -60,16 +51,30 @@ export default function CotizacionesPage() {
     setResultado(data)
   }
 
-  const convertirContrato = async (numeroCotizacion: string) => {
-    await fetch("/api/contratos/crear-desde-cotizacion", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ numero: numeroCotizacion }),
-    })
+  const convertirContrato = async (cotizacionId: number) => {
+    try {
+        const res = await fetch("/api/contratos/crear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cotizacionId }),
+        })
+        console.log("Objeto completo:", resultado)
+        const data = await res.json()
 
-    alert("Contrato generado")
-  }
+        if (!res.ok) {
+        throw new Error(data.error || "Error al crear contrato")
+        }
 
+        console.log("Contrato creado:", data)
+        alert("Contrato generado correctamente")
+
+    } catch (error) {
+        console.error(error)
+        alert("Error al generar contrato")
+    }
+    }
+
+    
   return (
     <div className="min-h-screen bg-black text-white p-4">
 
@@ -160,7 +165,7 @@ export default function CotizacionesPage() {
       </button>
 
       {/* RESULTADO */}
-      {resultado && (
+      {resultado?.precioFinal !== undefined && (
         <div className="mt-8 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-lg">
           <h2 className="text-xl font-bold text-cyan-400 mb-4">
             Resultado
@@ -172,11 +177,11 @@ export default function CotizacionesPage() {
 
           <p className="text-gray-300 mt-2">
             <strong>Precio Final:</strong>{" "}
-            ${resultado.precioFinal.toLocaleString()}
+            ${Number(resultado?.precioFinal ?? 0).toLocaleString()}
           </p>
-
+          
           <button
-            onClick={() => convertirContrato(resultado.numero)}
+            onClick={() => convertirContrato(resultado.id)}
             className="bg-green-600 hover:bg-green-500 px-5 py-2 mt-4 rounded-lg transition"
           >
             Convertir a Contrato
