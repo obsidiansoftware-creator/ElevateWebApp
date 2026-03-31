@@ -52,7 +52,6 @@ export async function POST(req) {
     const { nombre, contacto, tipo, telefono, correo, ubicacion, rfc } = body
     if (!nombre || !tipo) return new Response(JSON.stringify({ success: false, error: "'nombre' y 'tipo' son obligatorios" }), { status: 400 })
 
-    // Obtener el cliente padre automáticamente desde usuario_entidad
     const [rows] = await pool.query(
       'SELECT cliente_id FROM usuario_entidad WHERE usuario_id = ?',
       [userId]
@@ -64,7 +63,6 @@ export async function POST(req) {
 
     const clienteIdNumber = rows[0].cliente_id
 
-    // Insertar cliente final
     const [result] = await pool.query(
       `INSERT INTO clientes_finales
        (cliente_id, razon_social, nombre_contacto, tipo_cliente, telefono, email, direccion, rfc, estatus, created_by)

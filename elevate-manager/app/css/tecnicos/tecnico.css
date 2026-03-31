@@ -1,0 +1,52 @@
+.tec-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px; }
+.tec-eyebrow { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:.4em; color:var(--text2,#5c8fa8); text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.tec-eyebrow::before { content:''; display:block; width:20px; height:1px; background:#00ffa3; }
+.tec-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:30px; letter-spacing:.18em; color:var(--text,#c8e8f5); text-transform:uppercase; line-height:1; }
+.tec-title span { color:#00ffa3; }
+.section-divider { height:1px; background:linear-gradient(90deg,#00ffa3,transparent 60%); margin-bottom:24px; opacity:.2; }
+
+/* layout */
+.tec-layout { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media(max-width:900px) { .tec-layout { grid-template-columns:1fr; } }
+
+.tec-panel { background:var(--surface,#0a1520); border:1px solid rgba(0,200,255,.12); border-radius:4px; padding:22px; position:relative; }
+.tec-panel::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,#00ffa3,transparent 60%); opacity:.3; }
+.tec-panel-title { font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:.2em; color:var(--text,#c8e8f5); text-transform:uppercase; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+.tec-panel-dot { width:5px; height:5px; border-radius:50%; background:#00ffa3; box-shadow:0 0 5px #00ffa3; flex-shrink:0; }
+
+/* jornada status card */
+.jornada-status { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:28px 20px; }
+.jornada-clock { font-family:'Share Tech Mono',monospace; font-size:42px; letter-spacing:.05em; color:var(--text,#c8e8f5); line-height:1; text-align:center; }
+.jornada-clock.activo { color:#00ffa3; text-shadow:0 0 20px rgba(0,255,163,.3); }
+.jornada-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:.35em; color:var(--text2,#5c8fa8); text-transform:uppercase; }
+
+/* gps indicator */
+.gps-indicator { display:flex; align-items:center; gap:8px; padding:10px 16px; background:rgba(0,0,0,.3); border:1px solid rgba(0,200,255,.08); border-radius:3px; width:100%; }
+.gps-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+@keyframes gps-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+.gps-dot.pulse { animation:gps-pulse 1.2s infinite; }
+.gps-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; }
+.gps-coords { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:.08em; color:var(--text2,#5c8fa8); margin-left:auto; }
+
+/* action button */
+.jornada-btn { width:100%; padding:14px; border-radius:3px; border:1px solid transparent; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:16px; letter-spacing:.3em; text-transform:uppercase; cursor:pointer; position:relative; overflow:hidden; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:10px; }
+.jornada-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); transform:translateX(-100%); transition:transform .4s; }
+.jornada-btn:hover::before { transform:translateX(100%); }
+.jornada-btn.iniciar { border-color:rgba(0,255,163,.4); color:#00ffa3; background:rgba(0,255,163,.04); }
+.jornada-btn.iniciar:hover { border-color:#00ffa3; box-shadow:0 0 24px rgba(0,255,163,.2); }
+.jornada-btn.finalizar { border-color:rgba(255,59,92,.4); color:#ff3b5c; background:rgba(255,59,92,.04); }
+.jornada-btn.finalizar:hover { border-color:#ff3b5c; box-shadow:0 0 24px rgba(255,59,92,.15); }
+
+/* stats row */
+.tec-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+.tec-stat { padding:12px 14px; background:rgba(0,0,0,.25); border:1px solid rgba(0,200,255,.07); border-radius:3px; }
+.tec-stat-val { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px; color:var(--text,#c8e8f5); line-height:1; }
+.tec-stat-key { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.2em; color:var(--text2,#5c8fa8); text-transform:uppercase; margin-top:3px; }
+
+/* log */
+.tec-log { height:260px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(0,200,255,.15) transparent; display:flex; flex-direction:column; gap:0; }
+.log-item { display:flex; gap:10px; padding:5px 0; border-bottom:1px solid rgba(0,200,255,.04); font-family:'Share Tech Mono',monospace; }
+.log-item:last-child { border-bottom:none; }
+.log-time { font-size:9px; color:var(--text2,#5c8fa8); flex-shrink:0; min-width:60px; }
+.log-dot  { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:2px; }
+.log-msg  { font-size:10px; letter-spacing:.04em; line-height:1.4; }

@@ -114,6 +114,7 @@ export async function POST(req) {
     })
 
   } catch (error) {
+    console.error('🔥 ERROR PROYECTOS:', error)
     return Response.json(
       { success: false, error: error.message },
       { status: 500 }

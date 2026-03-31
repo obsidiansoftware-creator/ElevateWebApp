@@ -2,242 +2,250 @@
 
 import { useState, useEffect } from 'react'
 import { useProyectos, Proyecto } from '../../contexts/ProyectosContext'
+import '../../../css/proyectos/calendario/calendario.css'
 
-const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const WEEK_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-const tipos = [
-  { key: 'Instalación', color: 'bg-red-400' },
-  { key: 'Ajuste', color: 'bg-blue-400' },
-  { key: 'Otro', color: 'bg-green-400' },
-]
+const TIPO_CONFIG = {
+  Instalación: { color: '#ff6b2b', bg: 'rgba(255,107,43,0.15)', border: 'rgba(255,107,43,0.4)' },
+  Ajuste:      { color: '#00c8ff', bg: 'rgba(0,200,255,0.1)',   border: 'rgba(0,200,255,0.35)' },
+  Otro:        { color: '#00ffa3', bg: 'rgba(0,255,163,0.1)',   border: 'rgba(0,255,163,0.35)' },
+} as const
 
+type TipoKey = keyof typeof TIPO_CONFIG
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function normalizeTipo(tipo?: string | null): TipoKey {
+  if (!tipo) return 'Otro'
+  const t = tipo.toLowerCase().trim()
+  if (t.includes('instal')) return 'Instalación'
+  if (t.includes('ajust'))  return 'Ajuste'
+  return 'Otro'
+}
+
+// ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function CalendarioPage() {
   const { proyectos } = useProyectos()
 
   const today = new Date()
-  const [month, setMonth] = useState(today.getMonth())
-  const [year, setYear] = useState(today.getFullYear())
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-
-  const [filtros, setFiltros] = useState<Record<string, boolean>>({
+  const [month,    setMonth]    = useState(today.getMonth())
+  const [year,     setYear]     = useState(today.getFullYear())
+  const [selected, setSelected] = useState<Proyecto | null>(null)
+  const [filtros,  setFiltros]  = useState<Record<TipoKey, boolean>>({
     Instalación: true,
-    Ajuste: true,
-    Otro: true,
+    Ajuste:      true,
+    Otro:        true,
   })
 
-  const toggleFiltro = (tipo: string) => {
-    setFiltros(prev => ({ ...prev, [tipo]: !prev[tipo] }))
-  }
-
-  const [selected, setSelected] = useState<Proyecto | null>(null)
+  const daysInMonth  = new Date(year, month + 1, 0).getDate()
+  const firstWeekDay = (new Date(year, month, 1).getDay() + 6) % 7 // Mon=0
 
   useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelected(null)
-    }
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null) }
     document.addEventListener('keydown', onEsc)
     return () => document.removeEventListener('keydown', onEsc)
   }, [])
 
-  /* ========================= COLOR DINÁMICO ========================= */
-
-  const getTipoNormalizado = (tipo?: string | null) => {
-    if (!tipo) return 'Otro'
-
-    const t = tipo.toLowerCase().trim()
-
-    if (t.includes('instal')) return 'Instalación'
-    if (t.includes('ajust')) return 'Ajuste'
-
-    return 'Otro'
-  }
-
-  const getTipoColor = (tipo?: string | null) => {
-    const normalizado = getTipoNormalizado(tipo)
-
-    if (normalizado === 'Instalación') return 'bg-red-400'
-    if (normalizado === 'Ajuste') return 'bg-blue-400'
-
-    return 'bg-green-400'
-  }
-
-  /* ========================= FILTRADO ========================= */
+  const toggleFiltro = (tipo: TipoKey) =>
+    setFiltros(prev => ({ ...prev, [tipo]: !prev[tipo] }))
 
   const getProjectsForDay = (day: number) =>
     proyectos.filter(p => {
-      const tipoNormalizado = getTipoNormalizado(p.tipo_proveedor)
-
-      if (!filtros[tipoNormalizado]) return false
-
-      const start = new Date(p.fechaInicio)
-      const end = new Date(p.fechaEntrega)
+      if (!filtros[normalizeTipo(p.tipo_proveedor)]) return false
       const d = new Date(year, month, day)
-
-      return d >= start && d <= end
+      return d >= new Date(p.fechaInicio) && d <= new Date(p.fechaEntrega)
     })
-
-  /* ========================= CAMBIO MES ========================= */
 
   const changeMonth = (dir: -1 | 1) => {
     setMonth(prev => {
-      if (prev + dir < 0) {
-        setYear(y => y - 1)
-        return 11
-      }
-      if (prev + dir > 11) {
-        setYear(y => y + 1)
-        return 0
-      }
-      return prev + dir
+      const next = prev + dir
+      if (next < 0)  { setYear(y => y - 1); return 11 }
+      if (next > 11) { setYear(y => y + 1); return 0  }
+      return next
     })
   }
 
-  const monthName = new Date(year, month).toLocaleString('es-MX', {
-    month: 'long',
-    year: 'numeric',
-  })
+  const monthLabel = new Date(year, month).toLocaleString('es-MX', { month: 'long' })
+  const isToday    = (day: number) =>
+    day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
 
-  /* ========================= RENDER ========================= */
+  // total proyectos activos este mes
+  const totalMes = proyectos.filter(p => {
+    const s = new Date(p.fechaInicio), e = new Date(p.fechaEntrega)
+    const ms = new Date(year, month, 1), me = new Date(year, month + 1, 0)
+    return s <= me && e >= ms
+  }).length
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-cyan-400">
-            Calendario de Proyectos
-          </h1>
-          <p className="text-cyan-600 text-sm capitalize">{monthName}</p>
-        </div>
+    <>
+      <div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => changeMonth(-1)}
-            className="px-3 py-1 rounded bg-gray-800 text-cyan-300 hover:bg-gray-700"
-          >
-            ←
-          </button>
-          <button
-            onClick={() => changeMonth(1)}
-            className="px-3 py-1 rounded bg-gray-800 text-cyan-300 hover:bg-gray-700"
-          >
-            →
-          </button>
-        </div>
-      </div>
+        {/* ── HEADER ── */}
+        <div className="cal-header">
+          <div>
+            <div className="cal-eyebrow">Planificación</div>
+            <div className="cal-title">CALENDARIO <span>DE PROYECTOS</span></div>
+            <div className="cal-month-label">{monthLabel} {year}</div>
+          </div>
 
-      {/* FILTROS */}
-      <div className="flex gap-3 flex-wrap">
-        {tipos.map(t => (
-          <button
-            key={t.key}
-            onClick={() => toggleFiltro(t.key)}
-            className={`
-              px-3 py-1.5 rounded-full text-sm font-medium border transition
-              ${
-                filtros[t.key]
-                  ? `${t.color} text-gray-900 border-transparent`
-                  : 'bg-gray-800 text-gray-400 border-gray-600 line-through'
-              }
-            `}
-          >
-            {t.key}
-          </button>
-        ))}
-      </div>
-
-      {/* DÍAS */}
-      <div className="grid grid-cols-7 gap-2 text-center text-cyan-300 text-sm font-semibold">
-        {weekDays.map(d => (
-          <div key={d}>{d}</div>
-        ))}
-      </div>
-
-      {/* CALENDARIO */}
-      <div className="grid grid-cols-7 gap-2">
-        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
-          const projects = getProjectsForDay(day)
-
-          return (
-            <div
-              key={day}
-              className="
-                bg-gray-900 border border-cyan-800 rounded-xl p-2 h-32
-                overflow-y-auto no-scrollbar
-                hover:border-cyan-500 transition
-              "
-            >
-              <div className="text-xs text-cyan-400 font-semibold mb-1">
-                {day}
-              </div>
-
-              {projects.length === 0 && (
-                <p className="text-[10px] text-gray-600 italic">
-                  Sin proyectos
-                </p>
-              )}
-
-              {projects.map(p => (
-                <div
-                  key={p.id}
-                  onClick={() => setSelected(p)}
-                  className={`
-                    cursor-pointer text-[11px] px-2 py-0.5 rounded mb-1 truncate
-                    ${getTipoColor(p.tipo_proveedor)}
-                    text-gray-900 font-medium
-                  `}
-                >
-                  {p.nombre}
-                </div>
-              ))}
+          <div className="cal-nav-row">
+            <div className="cal-meta-badge">
+              <strong>{totalMes}</strong> proyecto{totalMes !== 1 ? 's' : ''} este mes
             </div>
-          )
-        })}
-      </div>
-
-      {/* MODAL */}
-      {selected && (
-        <div
-          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className="
-              bg-gray-900 border border-cyan-500 rounded-xl p-6 w-full max-w-md
-              shadow-[0_0_40px_rgba(34,211,238,0.4)]
-            "
-          >
-            <h2 className="text-xl font-bold text-cyan-300 mb-2">
-              {selected.nombre}
-            </h2>
-
-            <p className="text-cyan-400 text-sm mb-1">
-              Cliente: {selected.cliente}
-            </p>
-            <p className="text-cyan-400 text-sm mb-1">
-              Ubicación: {selected.ubicacion}
-            </p>
-            <p className="text-cyan-500 text-xs mb-2">
-              {selected.fechaInicio} → {selected.fechaEntrega}
-            </p>
-            <p className="text-cyan-300 text-sm">
-              {selected.descripcion || 'Sin descripción'}
-            </p>
-
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setSelected(null)}
-                className="px-4 py-2 rounded bg-gray-700 text-cyan-300 hover:bg-gray-600"
-              >
-                Cerrar
-              </button>
-            </div>
+            <button className="cal-nav-btn" onClick={() => changeMonth(-1)}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button className="cal-nav-btn" onClick={() => changeMonth(1)}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>
-      )}
-    </div>
+
+        <div className="section-divider" />
+
+        {/* ── FILTROS ── */}
+        <div className="cal-filtros">
+          {(Object.keys(TIPO_CONFIG) as TipoKey[]).map(tipo => {
+            const cfg    = TIPO_CONFIG[tipo]
+            const active = filtros[tipo]
+            return (
+              <button
+                key={tipo}
+                className={`filtro-pill ${active ? 'active' : 'inactive'}`}
+                style={{ color: active ? cfg.color : undefined }}
+                onClick={() => toggleFiltro(tipo)}
+              >
+                <span className="filtro-dot" style={{ background: cfg.color }} />
+                {tipo}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* ── WEEKDAY HEADERS ── */}
+        <div className="cal-weekdays">
+          {WEEK_DAYS.map(d => (
+            <div key={d} className="cal-weekday">{d}</div>
+          ))}
+        </div>
+
+        {/* ── CALENDAR GRID ── */}
+        <div className="cal-grid">
+
+          {/* empty offset cells */}
+          {Array.from({ length: firstWeekDay }).map((_, i) => (
+            <div key={`empty-${i}`} className="cal-empty" />
+          ))}
+
+          {/* day cells */}
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+            const projects = getProjectsForDay(day)
+            const today_   = isToday(day)
+
+            return (
+              <div key={day} className={`cal-cell ${today_ ? 'today' : ''}`}>
+                <div className="cal-day-num">{String(day).padStart(2,'0')}</div>
+
+                {projects.length === 0 && (
+                  <div className="cal-cell-empty-msg">—</div>
+                )}
+
+                {projects.map(p => {
+                  const cfg = TIPO_CONFIG[normalizeTipo(p.tipo_proveedor)]
+                  return (
+                    <div
+                      key={p.id}
+                      className="cal-chip"
+                      style={{
+                        color:      cfg.color,
+                        background: cfg.bg,
+                        borderColor:cfg.border,
+                      }}
+                      onClick={() => setSelected(p)}
+                    >
+                      {p.nombre}
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* ── MODAL ── */}
+        {selected && (
+          <div className="cal-modal-backdrop" onClick={() => setSelected(null)}>
+            <div className="cal-modal" onClick={e => e.stopPropagation()}>
+              <div className="cal-modal-corner tl" />
+              <div className="cal-modal-corner tr" />
+              <div className="cal-modal-corner bl" />
+              <div className="cal-modal-corner br" />
+
+              {/* header */}
+              <div className="cal-modal-header">
+                <div>
+                  <div style={{ fontFamily:"'Share Tech Mono',monospace", fontSize:8, letterSpacing:'0.35em', color:'var(--text2,#5c8fa8)', marginBottom:4, textTransform:'uppercase' }}>
+                    Detalle del proyecto
+                  </div>
+                  <div className="cal-modal-title">{selected.nombre}</div>
+                  {/* tipo tag */}
+                  {(() => {
+                    const cfg = TIPO_CONFIG[normalizeTipo(selected.tipo_proveedor)]
+                    return (
+                      <span style={{ display:'inline-flex', alignItems:'center', gap:5, marginTop:6, padding:'2px 8px', border:`1px solid ${cfg.color}`, borderRadius:2, fontFamily:"'Share Tech Mono',monospace", fontSize:8, letterSpacing:'0.2em', color:cfg.color, background:cfg.bg }}>
+                        {normalizeTipo(selected.tipo_proveedor).toUpperCase()}
+                      </span>
+                    )
+                  })()}
+                </div>
+                <button className="cal-modal-close" onClick={() => setSelected(null)}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+
+              {/* body */}
+              <div className="cal-modal-body">
+                <div className="cal-modal-field">
+                  <span className="cal-modal-key">Cliente</span>
+                  <span className="cal-modal-val">{selected.cliente}</span>
+                </div>
+                <div className="cal-modal-field">
+                  <span className="cal-modal-key">Ubicación</span>
+                  <span className="cal-modal-val">{selected.ubicacion}</span>
+                </div>
+
+                {/* date range */}
+                <div className="cal-modal-dates">
+                  <span className="cal-modal-date">{selected.fechaInicio}</span>
+                  <svg width="16" height="8" viewBox="0 0 16 8" fill="none">
+                    <path d="M1 4h13M11 1l3 3-3 3" stroke="rgba(0,200,255,0.3)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="cal-modal-date">{selected.fechaEntrega}</span>
+                </div>
+
+                {selected.descripcion && (
+                  <div className="cal-modal-desc">{selected.descripcion}</div>
+                )}
+              </div>
+
+              {/* footer */}
+              <div className="cal-modal-footer">
+                <button className="cal-modal-btn" onClick={() => setSelected(null)}>
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </>
   )
 }

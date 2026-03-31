@@ -1,0 +1,275 @@
+.pf-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pf-modal {
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: linear-gradient(160deg, #060e18 0%, #030508 100%);
+    border: 1px solid rgba(0,200,255,0.2);
+    border-radius: 4px;
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,200,255,0.2) transparent;
+    animation: pf-appear 0.25s ease;
+}
+
+@keyframes pf-appear {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* top accent line */
+.pf-modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent,#00c8ff), transparent 60%);
+}
+
+/* corner decos */
+.pf-corner {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: rgba(0,200,255,0.3);
+    border-style: solid;
+    pointer-events: none;
+}
+.pf-corner.tl { top: 6px; left: 6px;  border-width: 1px 0 0 1px; }
+.pf-corner.tr { top: 6px; right: 6px;  border-width: 1px 1px 0 0; }
+.pf-corner.bl { bottom: 6px; left: 6px;  border-width: 0 0 1px 1px; }
+.pf-corner.br { bottom: 6px; right: 6px;  border-width: 0 1px 1px 0; }
+
+/* ── MODAL HEADER ── */
+.pf-header {
+    padding: 24px 28px 18px;
+    border-bottom: 1px solid rgba(0,200,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pf-title-eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.4em;
+    color: var(--text2,#5c8fa8);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.pf-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.15em;
+    color: var(--text,#c8e8f5);
+    text-transform: uppercase;
+}
+
+.pf-title span { color: var(--accent,#00c8ff); }
+
+.pf-close {
+    background: none;
+    border: 1px solid rgba(0,200,255,0.15);
+    border-radius: 3px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text2,#5c8fa8);
+    cursor: pointer;
+    transition: all 0.18s;
+    flex-shrink: 0;
+}
+.pf-close:hover {
+    border-color: var(--danger,#ff3b5c);
+    color: var(--danger,#ff3b5c);
+    background: rgba(255,59,92,0.06);
+}
+
+/* ── BODY ── */
+.pf-body {
+    padding: 22px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ── SECTION ── */
+.pf-section {
+    margin-bottom: 20px;
+}
+
+.pf-section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.4em;
+    color: var(--text2,#5c8fa8);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.7;
+}
+
+.pf-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(0,200,255,0.08);
+}
+
+/* ── FIELD ── */
+.pf-field {
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.pf-field-label {
+    display: block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.3em;
+    color: var(--text2,#5c8fa8);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    transition: color 0.18s;
+}
+
+.pf-field.focused .pf-field-label { color: var(--accent,#00c8ff); }
+
+.pf-input,
+.pf-select,
+.pf-textarea {
+    width: 100%;
+    background: rgba(0,200,255,0.03);
+    border: 1px solid rgba(0,200,255,0.15);
+    border-radius: 3px;
+    padding: 10px 14px;
+    color: var(--text,#c8e8f5);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    appearance: none;
+}
+
+.pf-input::placeholder,
+.pf-textarea::placeholder {
+    color: rgba(0,200,255,0.2);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+}
+
+.pf-input:focus,
+.pf-select:focus,
+.pf-textarea:focus {
+    border-color: rgba(0,200,255,0.4);
+    background: rgba(0,200,255,0.05);
+    box-shadow: 0 0 0 3px rgba(0,200,255,0.05);
+}
+
+.pf-textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+/* select arrow */
+.pf-select-wrap { position: relative; }
+.pf-select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text2,#5c8fa8);
+    pointer-events: none;
+    font-size: 11px;
+}
+
+.pf-select option {
+    background: #060e18;
+    color: var(--text,#c8e8f5);
+}
+
+/* date input */
+.pf-input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6) sepia(1) hue-rotate(170deg);
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+/* row */
+.pf-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* required star */
+.req { color: var(--accent3,#ff6b2b); margin-left: 2px; }
+
+/* ── FOOTER ── */
+.pf-footer {
+    padding: 16px 28px 22px;
+    border-top: 1px solid rgba(0,200,255,0.08);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+.pf-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    border-radius: 3px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.18s;
+    border: 1px solid transparent;
+    background: transparent;
+}
+
+.pf-btn-cancel {
+    border-color: rgba(0,200,255,0.15);
+    color: var(--text2,#5c8fa8);
+}
+.pf-btn-cancel:hover {
+    border-color: rgba(0,200,255,0.3);
+    color: var(--text,#c8e8f5);
+    background: rgba(0,200,255,0.04);
+}
+
+.pf-btn-save {
+    border-color: rgba(0,200,255,0.4);
+    color: var(--accent,#00c8ff);
+    position: relative;
+    overflow: hidden;
+}
+.pf-btn-save::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(0,200,255,0.08), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.35s;
+}
+.pf-btn-save:hover::before { transform: translateX(100%); }
+.pf-btn-save:hover {
+    border-color: var(--accent,#00c8ff);
+    box-shadow: 0 0 18px rgba(0,200,255,0.15);
+}

@@ -1,0 +1,57 @@
+.pv-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px; }
+.pv-eyebrow { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:.4em; color:var(--text2,#5c8fa8); text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.pv-eyebrow::before { content:''; display:block; width:20px; height:1px; background:#ff6b2b; }
+.pv-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:30px; letter-spacing:.18em; color:var(--text,#c8e8f5); text-transform:uppercase; line-height:1; }
+.pv-title span { color:#ff6b2b; }
+.section-divider { height:1px; background:linear-gradient(90deg,#ff6b2b,transparent 60%); margin-bottom:20px; opacity:.2; }
+
+.btn-add-pv { display:flex; align-items:center; gap:8px; padding:10px 20px; background:transparent; border:1px solid rgba(255,107,43,.35); border-radius:3px; color:#ff6b2b; font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:.2em; text-transform:uppercase; cursor:pointer; overflow:hidden; position:relative; transition:all .2s; white-space:nowrap; }
+.btn-add-pv::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,107,43,.07),transparent); transform:translateX(-100%); transition:transform .4s; }
+.btn-add-pv:hover::before { transform:translateX(100%); }
+.btn-add-pv:hover { border-color:#ff6b2b; box-shadow:0 0 20px rgba(255,107,43,.12); }
+
+.pv-summary { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.pv-sum-item { display:flex; align-items:center; gap:8px; padding:7px 14px; background:var(--surface,#0a1520); border:1px solid rgba(0,200,255,.1); border-radius:3px; }
+.pv-sum-dot  { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.pv-sum-val  { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:18px; line-height:1; }
+.pv-sum-label{ font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.2em; color:var(--text2,#5c8fa8); text-transform:uppercase; }
+
+.pv-search-wrap { position:relative; flex:1; min-width:220px; max-width:380px; }
+.pv-search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text2,#5c8fa8); pointer-events:none; transition:color .2s; }
+.pv-search-wrap.focused .pv-search-icon { color:#ff6b2b; }
+.pv-search-input { width:100%; background:rgba(0,200,255,.03); border:1px solid rgba(0,200,255,.15); border-radius:3px; padding:9px 12px 9px 36px; color:var(--text,#c8e8f5); font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:.06em; outline:none; transition:border-color .2s,box-shadow .2s; }
+.pv-search-input::placeholder { color:rgba(0,200,255,.18); font-size:11px; }
+.pv-search-input:focus { border-color:rgba(255,107,43,.35); box-shadow:0 0 0 3px rgba(255,107,43,.04); }
+
+.pv-meta { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--text2,#5c8fa8); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.pv-meta::before { content:''; display:block; width:1px; height:12px; background:#ff6b2b; opacity:.4; }
+
+.pv-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media(max-width:1100px){ .pv-grid { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:680px) { .pv-grid { grid-template-columns:1fr; } }
+
+.pv-card { background:var(--surface,#0a1520); border:1px solid rgba(0,200,255,.1); border-radius:4px; padding:18px; display:flex; flex-direction:column; gap:12px; position:relative; overflow:hidden; transition:border-color .2s,transform .2s; }
+.pv-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#ff6b2b,transparent); opacity:.5; transition:opacity .2s; }
+.pv-card:hover { border-color:rgba(255,107,43,.2); transform:translateY(-1px); }
+.pv-card:hover::before { opacity:.9; }
+.pv-card::after { content:''; position:absolute; bottom:0; right:0; width:10px; height:10px; border-right:1px solid rgba(255,107,43,.15); border-bottom:1px solid rgba(255,107,43,.15); }
+
+.pv-card-header { display:flex; align-items:flex-start; gap:10px; }
+.pv-card-info   { flex:1; min-width:0; }
+.pv-card-name   { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:.06em; color:var(--text,#c8e8f5); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pv-card-rfc    { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:.15em; color:var(--text2,#5c8fa8); margin-top:2px; }
+
+.pv-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:2px; border:1px solid currentColor; font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.15em; white-space:nowrap; flex-shrink:0; }
+.pv-badge-dot { width:4px; height:4px; border-radius:50%; background:currentColor; }
+
+.pv-fields { display:flex; flex-direction:column; gap:5px; }
+.pv-field  { display:flex; align-items:baseline; gap:8px; }
+.pv-field-key { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.25em; color:var(--text2,#5c8fa8); text-transform:uppercase; flex-shrink:0; min-width:68px; }
+.pv-field-val { font-family:'Exo 2',sans-serif; font-size:12px; color:var(--text,#c8e8f5); opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.pv-bank-row { padding:7px 10px; background:rgba(0,0,0,.25); border:1px solid rgba(0,200,255,.06); border-radius:3px; display:flex; flex-direction:column; gap:3px; }
+.pv-bank-title { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:.2em; color:var(--text2,#5c8fa8); text-transform:uppercase; margin-bottom:2px; }
+.pv-bank-vals  { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text,#c8e8f5); opacity:.7; letter-spacing:.05em; }
+
+.pv-empty { grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px; gap:12px; border:1px dashed rgba(0,200,255,.1); border-radius:4px; }
+.pv-empty span { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:.3em; color:var(--text2,#5c8fa8); text-transform:uppercase; }

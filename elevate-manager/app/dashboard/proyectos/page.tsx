@@ -3,282 +3,302 @@
 import { useState } from 'react'
 import { useProyectos, Proyecto } from '@/app/dashboard/contexts/ProyectosContext'
 import ProyectoForm from '@/app/dashboard/proyectos/proyectos/ProyectForm'
+import '../../css/proyectos/proyectos.css'
 
+// ─── TYPES ───────────────────────────────────────────────────────────────────
+type StatusLabel = 'ACTIVO' | 'POR INICIAR' | 'FINALIZADO'
+
+interface ProyectoStatus {
+  label: StatusLabel
+  color: string
+  dotColor: string
+  priority: number
+}
+
+type ProyectoWithStatus = Proyecto & { status: ProyectoStatus }
+
+type FilterOption = 'TODOS' | StatusLabel
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function getProyectoStatus(fechaInicio: string, fechaEntrega: string): ProyectoStatus {
+  const hoy   = new Date(); hoy.setHours(0,0,0,0)
+  const inicio = new Date(fechaInicio); inicio.setHours(0,0,0,0)
+  const fin    = new Date(fechaEntrega); fin.setHours(0,0,0,0)
+
+  if (hoy < inicio) return { label: 'POR INICIAR', color: 'rgba(255,176,32,0.15)',  dotColor: '#ffb020', priority: 2 }
+  if (hoy > fin)    return { label: 'FINALIZADO',  color: 'rgba(255,59,92,0.12)',   dotColor: '#ff3b5c', priority: 3 }
+  return               { label: 'ACTIVO',       color: 'rgba(0,255,163,0.1)',    dotColor: '#00ffa3', priority: 1 }
+}
+
+function getTipoTag(tipo?: string | null): { label: string; color: string; bg: string } {
+  if (!tipo) return { label: 'OTRO', color: '#5c8fa8', bg: 'rgba(92,143,168,0.12)' }
+  const t = tipo.toLowerCase().trim()
+  if (t.includes('instal')) return { label: tipo.toUpperCase(), color: '#ff6b2b', bg: 'rgba(255,107,43,0.12)' }
+  if (t.includes('ajust'))  return { label: tipo.toUpperCase(), color: '#00c8ff', bg: 'rgba(0,200,255,0.1)' }
+  return { label: tipo.toUpperCase(), color: '#00ffa3', bg: 'rgba(0,255,163,0.1)' }
+}
+
+const STATUS_FILTERS: FilterOption[] = ['TODOS', 'ACTIVO', 'POR INICIAR', 'FINALIZADO']
+
+const STATUS_FILTER_COLORS: Record<FilterOption, string> = {
+  'TODOS':      '#00c8ff',
+  'ACTIVO':     '#00ffa3',
+  'POR INICIAR':'#ffb020',
+  'FINALIZADO': '#ff3b5c',
+}
+
+// ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function ProyectosPage() {
   const { proyectos, addProyecto, updateProyecto, deleteProyecto } = useProyectos()
 
-  const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState<Proyecto | null>(null)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<
-  'TODOS' | 'ACTIVO' | 'POR INICIAR' | 'FINALIZADO'
->('TODOS')
+  const [showForm,     setShowForm]     = useState(false)
+  const [editing,      setEditing]      = useState<Proyecto | null>(null)
+  const [search,       setSearch]       = useState('')
+  const [statusFilter, setStatusFilter] = useState<FilterOption>('TODOS')
 
-    type ProyectoWithStatus = Proyecto & {
-      status: {
-        label: 'ACTIVO' | 'POR INICIAR' | 'FINALIZADO'
-        color: string
-        border: string
-        priority: number
-      }
-    }
-      const processedProyectos: ProyectoWithStatus[] = proyectos
-      .map((p) => {
-        const status = getProyectoStatus(p.fechaInicio, p.fechaEntrega)
-        return { ...p, status }
-      })
-      .filter((p) => {
-        const matchesSearch =
-          p.nombre.toLowerCase().includes(search.toLowerCase()) ||
-          p.cliente.toLowerCase().includes(search.toLowerCase()) ||
-          p.ubicacion.toLowerCase().includes(search.toLowerCase())
+  // ── process + filter ──
+  const processed: ProyectoWithStatus[] = proyectos
+    .map(p => ({ ...p, status: getProyectoStatus(p.fechaInicio, p.fechaEntrega) }))
+    .filter(p => {
+      const q = search.toLowerCase()
+      const matchSearch =
+        p.nombre.toLowerCase().includes(q) ||
+        p.cliente.toLowerCase().includes(q) ||
+        p.ubicacion.toLowerCase().includes(q)
+      const matchStatus = statusFilter === 'TODOS' || p.status.label === statusFilter
+      return matchSearch && matchStatus
+    })
+    .sort((a, b) => a.status.priority - b.status.priority)
 
-        const matchesStatus =
-          statusFilter === 'TODOS' || p.status.label === statusFilter
+  // ── counts ──
+  const counts = {
+    TODOS:       proyectos.length,
+    ACTIVO:      proyectos.filter(p => getProyectoStatus(p.fechaInicio, p.fechaEntrega).label === 'ACTIVO').length,
+    'POR INICIAR': proyectos.filter(p => getProyectoStatus(p.fechaInicio, p.fechaEntrega).label === 'POR INICIAR').length,
+    FINALIZADO:  proyectos.filter(p => getProyectoStatus(p.fechaInicio, p.fechaEntrega).label === 'FINALIZADO').length,
+  }
 
-        return matchesSearch && matchesStatus
-      })
-      .sort((a, b) => a.status.priority - b.status.priority)
-
+  // ── delete ──
   const handleDelete = async (id: number) => {
     if (!confirm('¿Seguro que quieres eliminar este proyecto?')) return
-
-    const res = await fetch('/api/proyectos', {
+    const res  = await fetch('/api/proyectos', {
       method: 'DELETE',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id }),
     })
-
     const data = await res.json()
-
-    if (data.success) {
-      deleteProyecto(id)
-    } else {
-      alert('Error al eliminar')
-    }
+    if (data.success) deleteProyecto(id)
+    else alert('Error al eliminar')
   }
 
-    function getProyectoStatus(
-        fechaInicio: string,
-        fechaEntrega: string
-      ): {
-        label: 'ACTIVO' | 'POR INICIAR' | 'FINALIZADO'
-        color: string
-        border: string
-        priority: number
-      } { 
-        const hoy = new Date()
-        const inicio = new Date(fechaInicio)
-        const fin = new Date(fechaEntrega)
-
-        hoy.setHours(0, 0, 0, 0)
-        inicio.setHours(0, 0, 0, 0)
-        fin.setHours(0, 0, 0, 0)
-
-        if (hoy < inicio) {
-          return {
-            label: 'POR INICIAR',
-            color: 'bg-yellow-500',
-            border: 'border-yellow-500',
-            priority: 2
-          }
-        }
-
-        if (hoy > fin) {
-          return {
-            label: 'FINALIZADO',
-            color: 'bg-red-600',
-            border: 'border-red-600',
-            priority: 3
-          }
-        }
-
-        return {
-          label: 'ACTIVO',
-          color: 'bg-green-600',
-          border: 'border-green-600',
-          priority: 1
-        }
+  // ── save ──
+  const handleSave = async (proyectoGuardado: Proyecto) => {
+    if (editing) {
+      const res  = await fetch('/api/proyectos', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...editing, ...proyectoGuardado }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        updateProyecto({
+          ...editing, ...proyectoGuardado,
+          id: editing.id,
+          cliente:        proyectoGuardado.cliente        ?? editing.cliente,
+          contacto:       proyectoGuardado.contacto       ?? editing.contacto,
+          tipo_proveedor: proyectoGuardado.tipo_proveedor ?? editing.tipo_proveedor,
+        })
       }
-
-  const getTipoColor = (tipo?: string | null) => {
-    if (!tipo) return 'bg-gray-300'
-
-    const t = tipo.toLowerCase().trim()
-
-    if (t.includes('instal')) return 'bg-red-400'
-    if (t.includes('ajust')) return 'bg-blue-400'
-
-    return 'bg-green-400'
+    } else {
+      const res  = await fetch('/api/proyectos', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(proyectoGuardado),
+      })
+      const data = await res.json()
+      if (data.success) addProyecto({ ...proyectoGuardado, id: Number(data.id) })
+    }
+    setShowForm(false)
   }
-    
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <>
+      <div>
 
-      <div className="flex flex-wrap gap-3 justify-between items-center">
-        <h1 className="text-3xl font-bold text-cyan-400">
-          GESTOR DE PROYECTOS
-        </h1>
+        {/* ── HEADER ── */}
+        <div className="proy-header">
+          <div>
+            <div className="proy-title-eyebrow">Gestión Operativa</div>
+            <div className="proy-title">GESTOR DE <span>PROYECTOS</span></div>
+          </div>
 
-        <button
-          className="bg-cyan-500 text-gray-900 px-4 py-2 rounded hover:bg-cyan-600 transition"
-          onClick={() => {
-            setEditing(null)
-            setShowForm(true)
-          }}
-        >
-          ▸ Agregar Proyecto
-        </button>
-      </div>
-
-      <input
-        type="text"
-        placeholder="Buscar por nombre, cliente o ubicación..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full md:w-1/3 px-3 py-2 rounded-lg border border-cyan-500 bg-gray-900 text-cyan-100"
-      />
-      <div className="flex gap-2 flex-wrap">
-      {['TODOS', 'ACTIVO', 'POR INICIAR', 'FINALIZADO'].map((option) => (
-        <button
-          key={option}
-          onClick={() => setStatusFilter(option as any)}
-          className={`px-3 py-1 rounded text-sm transition ${
-            statusFilter === option
-              ? 'bg-cyan-500 text-gray-900'
-              : 'bg-gray-700 text-white hover:bg-gray-600'
-          }`}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {processedProyectos.map((p) => {
-        console.log("TIPO PROVEEDOR:", p.tipo_proveedor)
-        const status = p.status
-        return (
-          <div
-            key={p.id}
-            className={`relative bg-gray-800 p-4 rounded-xl border ${status.border} flex flex-col justify-between shadow-lg transition`}
+          <button
+            className="btn-add"
+            onClick={() => { setEditing(null); setShowForm(true) }}
           >
-            {/* Badge Status */}
-            <span
-              className={`absolute top-3 right-3 text-xs px-2 py-1 rounded text-white font-semibold shadow ${status.color}`}
-            >
-              {status.label}
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Nuevo Proyecto
+          </button>
+        </div>
+
+        <div className="section-divider" />
+
+        {/* ── TOOLBAR ── */}
+        <div className="proy-toolbar">
+          {/* Search */}
+          <div className="search-wrap">
+            <span className="search-icon">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.2"/>
+                <path d="M9 9l2.5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
             </span>
+            <input
+              type="text"
+              placeholder="Buscar por nombre, cliente o ubicación..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="search-input"
+            />
+          </div>
 
-            <div className="space-y-1">
-              <h2 className="text-cyan-200 font-semibold text-lg">
-                {p.nombre}
-              </h2>
-
-              <p className="text-cyan-400 text-sm">
-                Cliente: {p.cliente}
-              </p>
-
-              <p className="text-cyan-400 text-sm">
-                Ubicación: {p.ubicacion}
-              </p>
-
-              <p className="text-cyan-400 text-sm">
-                Contacto: {p.contacto}
-              </p>
-
-              <p className="text-cyan-500 text-xs">
-                {p.fechaInicio} → {p.fechaEntrega}
-              </p>
-
-              <p className="text-cyan-400 mt-2 text-sm">
-                {p.descripcion}
-              </p>
-
-              <span
-              className={`
-                inline-block mt-2 text-xs px-2 py-1 rounded text-gray-900 font-medium
-                ${getTipoColor(p.tipo_proveedor)}
-              `}
-            >
-              {p.tipo_proveedor ?? 'Otro'}
-            </span>
-            </div>
-
-            <div className="flex gap-2 mt-4">
-              <button
-                className="bg-yellow-500 px-3 py-1 rounded hover:bg-yellow-600 transition"
-                  onClick={() => {
-                    setEditing(p)
-                    setShowForm(true)
-                  }}
-                >
-                  Editar
-                </button>
-
+          {/* Filter pills */}
+          <div className="filter-pills">
+            {STATUS_FILTERS.map(opt => {
+              const col = STATUS_FILTER_COLORS[opt]
+              const isActive = statusFilter === opt
+              return (
                 <button
-                  className="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition"
-                  onClick={() => handleDelete(p.id)}
+                  key={opt}
+                  className={`filter-pill ${isActive ? 'active' : ''}`}
+                  style={{ color: isActive ? col : undefined }}
+                  onClick={() => setStatusFilter(opt)}
                 >
-                  Eliminar
+                  <div className="pill-dot" style={{ background: col }} />
+                  {opt}
+                  <span className="pill-count">{counts[opt]}</span>
                 </button>
-              </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ── RESULTS META ── */}
+        <div className="results-meta">
+          {processed.length} PROYECTO{processed.length !== 1 ? 'S' : ''} —{' '}
+          {statusFilter === 'TODOS' ? 'TODOS LOS ESTADOS' : statusFilter}
+        </div>
+
+        {/* ── GRID ── */}
+        <div className="proyectos-grid">
+          {processed.length === 0 ? (
+            <div className="empty-state">
+              <svg className="empty-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <rect x="4" y="8" width="40" height="32" rx="3" stroke="#00c8ff" strokeWidth="1.5"/>
+                <path d="M14 20h20M14 26h12" stroke="#00c8ff" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <span className="empty-label">Sin proyectos para mostrar</span>
             </div>
-          )
-        })}
+          ) : (
+            processed.map(p => {
+              const tag = getTipoTag(p.tipo_proveedor)
+              const accentColor = p.status.dotColor
+              return (
+                <div
+                  key={p.id}
+                  className="proy-card"
+                  style={{ '--card-accent': accentColor } as React.CSSProperties}
+                >
+                  {/* Header */}
+                  <div className="card-header">
+                    <div className="card-title">{p.nombre}</div>
+                    <span
+                      className="status-badge"
+                      style={{ color: p.status.dotColor }}
+                    >
+                      <span className="status-badge-dot" />
+                      {p.status.label}
+                    </span>
+                  </div>
+
+                  {/* Fields */}
+                  <div className="card-fields">
+                    <div className="card-field">
+                      <span className="card-field-key">Cliente</span>
+                      <span className="card-field-val">{p.cliente}</span>
+                    </div>
+                    <div className="card-field">
+                      <span className="card-field-key">Ubicación</span>
+                      <span className="card-field-val">{p.ubicacion}</span>
+                    </div>
+                    <div className="card-field">
+                      <span className="card-field-key">Contacto</span>
+                      <span className="card-field-val">{p.contacto}</span>
+                    </div>
+                  </div>
+
+                  {/* Date range */}
+                  <div className="date-range">
+                    <span className="date-range-item">{p.fechaInicio}</span>
+                    <span className="date-range-arrow">→</span>
+                    <span className="date-range-item">{p.fechaEntrega}</span>
+                  </div>
+
+                  {/* Description */}
+                  {p.descripcion && (
+                    <p className="card-desc">{p.descripcion}</p>
+                  )}
+
+                  {/* Footer */}
+                  <div className="card-footer">
+                    <span
+                      className="tipo-tag"
+                      style={{ color: tag.color, background: tag.bg }}
+                    >
+                      {tag.label}
+                    </span>
+
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        className="btn-action btn-edit"
+                        onClick={() => { setEditing(p); setShowForm(true) }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                          <path d="M7.5 1.5l2 2L3 10H1V8L7.5 1.5z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                        </svg>
+                        Editar
+                      </button>
+                      <button
+                        className="btn-action btn-delete"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                          <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4L8 3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* ── FORM MODAL ── */}
+        {showForm && (
+          <ProyectoForm
+            proyecto={editing}
+            onClose={() => setShowForm(false)}
+            onSave={handleSave}
+          />
+        )}
       </div>
-      {showForm && (
-        <ProyectoForm
-          proyecto={editing}
-          onClose={() => setShowForm(false)}
-          onSave={async (proyectoGuardado: Proyecto) => {
-            if (editing) {
-              const res = await fetch('/api/proyectos', {
-                method: 'PUT',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...editing, ...proyectoGuardado })
-              })
-
-              const data = await res.json()
-
-              if (data.success) {
-                // 🔹 Merge completo de campos para que no se pierda nada
-                const proyectoActualizado: Proyecto = {
-                  ...editing,
-                  ...proyectoGuardado,
-                  id: editing.id,           // asegura que el id sea el mismo
-                  cliente: proyectoGuardado.cliente ?? editing.cliente,
-                  contacto: proyectoGuardado.contacto ?? editing.contacto,
-                  tipo_proveedor: proyectoGuardado.tipo_proveedor ?? editing.tipo_proveedor
-                }
-
-                updateProyecto(proyectoActualizado)
-              }
-
-            } else {
-              const res = await fetch('/api/proyectos', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(proyectoGuardado)
-              })
-
-              const data = await res.json()
-
-              if (data.success) {
-                addProyecto({
-                  ...proyectoGuardado,
-                  id: Number(data.id)
-                })
-              }
-            }
-
-            setShowForm(false)
-          }}
-
-        />
-      )}
-    </div>
+    </>
   )
 }
