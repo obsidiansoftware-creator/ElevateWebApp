@@ -142,7 +142,7 @@ export default function GestionTecnicosPage() {
     if (d.success) setTecnicos(d.data)
   }
   const loadActividades = async () => {
-    const r = await fetch("/api/actividades-tecnico"); const d = await r.json()
+    const r = await fetch("/api/tecnico/actividades-tecnico"); const d = await r.json()
     if (d.success) setActividades(d.data)
   }
   const loadProyectos = async () => {
@@ -162,7 +162,7 @@ export default function GestionTecnicosPage() {
     loadTecnicos(); setConfirmDelete(null)
   }
   const handleDeleteAct = async (id: number) => {
-    await fetch(`/api/actividades-tecnico/${id}`, { method: "DELETE" })
+    await fetch(`/api/tecnico/actividades-tecnico/${id}`, { method: "DELETE" })
     loadActividades(); setConfirmDelete(null)
   }
 

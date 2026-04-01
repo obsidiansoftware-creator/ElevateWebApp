@@ -43,7 +43,7 @@ export interface Actividad {
 }
 
 interface Props {
-  actividad: Actividad | null  // null = crear, Actividad = editar
+  actividad: Actividad | null
   tecnicos:  Tecnico[]
   proyectos: Proyecto[]
   onClose:   () => void
@@ -57,13 +57,7 @@ const PRIO_CFG = {
   3: { color: "#00ffa3", label: "BAJA"  },
 }
 
-const TIPO_OPTS = [
-  "mantenimiento",
-  "instalacion",
-  "revision",
-  "emergencia",
-  "otro",
-]
+const TIPO_OPTS = ["mantenimiento", "instalacion", "revision", "emergencia", "otro"]
 
 const TIPO_LABELS: Record<string, string> = {
   mantenimiento: "Mantenimiento",
@@ -71,6 +65,43 @@ const TIPO_LABELS: Record<string, string> = {
   revision:      "Revisión",
   emergencia:    "Emergencia",
   otro:          "Otro",
+}
+
+// ─── CAMPO — definido FUERA del componente para evitar bug de foco ────────────
+// ⚠️  Definir componentes hijos dentro del render padre hace que React los
+//     destruya y recree en cada update, perdiendo el foco del input.
+interface FieldProps {
+  id: string
+  label: string
+  value: string
+  onChange: (v: string) => void
+  type?: string
+  placeholder?: string
+  focused: string | null
+  onFocus: (id: string) => void
+  onBlur: () => void
+}
+
+function FormField({
+  id, label, value, onChange,
+  type = "text", placeholder,
+  focused, onFocus, onBlur,
+}: FieldProps) {
+  return (
+    <div className={`gf-field ${focused === id ? "focused" : ""}`}>
+      <label className="gf-label">{label}</label>
+      <input
+        className="gf-input"
+        type={type}
+        placeholder={placeholder || label}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => onFocus(id)}
+        onBlur={onBlur}
+        autoComplete="off"
+      />
+    </div>
+  )
 }
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
@@ -89,14 +120,13 @@ export default function AgregarActividadTecnicoForm({
   const [direccion,     setDireccion]     = useState(actividad?.direccion       || "")
   const [clienteNombre, setClienteNombre] = useState(actividad?.cliente_nombre  || "")
   const [prioridad,     setPrioridad]     = useState<1 | 2 | 3>(actividad?.prioridad || 3)
-  const [tipo,          setTipo]          = useState(actividad?.tipo             || "mantenimiento")
-  const [notas,         setNotas]         = useState(actividad?.notas            || "")
-  const [completada,    setCompletada]    = useState(actividad?.completada       || false)
+  const [tipo,          setTipo]          = useState(actividad?.tipo            || "mantenimiento")
+  const [notas,         setNotas]         = useState(actividad?.notas           || "")
+  const [completada,    setCompletada]    = useState(actividad?.completada      || false)
   const [focused,       setFocused]       = useState<string | null>(null)
   const [saving,        setSaving]        = useState(false)
   const [error,         setError]         = useState("")
 
-  // Cerrar con ESC
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose()
     document.addEventListener("keydown", esc)
@@ -114,28 +144,27 @@ export default function AgregarActividadTecnicoForm({
 
   const handleSave = async () => {
     if (!titulo || !tecnicoId || !fecha) {
-      setError("Título, técnico y fecha son obligatorios")
-      return
+      setError("Título, técnico y fecha son obligatorios"); return
     }
     setSaving(true); setError("")
     try {
       const body = {
         titulo,
-        descripcion:       descripcion       || null,
-        tecnico_id:        tecnicoId,
-        proyecto_id:       proyectoId        || null,
-        fecha_programada:  fecha,
-        hora_inicio:       horaInicio        || null,
-        hora_fin:          horaFin           || null,
-        direccion:         direccion         || null,
-        cliente_nombre:    clienteNombre     || null,
+        descripcion:      descripcion      || null,
+        tecnico_id:       tecnicoId,
+        proyecto_id:      proyectoId       || null,
+        fecha_programada: fecha,
+        hora_inicio:      horaInicio       || null,
+        hora_fin:         horaFin          || null,
+        direccion:        direccion        || null,
+        cliente_nombre:   clienteNombre    || null,
         prioridad,
         tipo,
-        notas:             notas             || null,
+        notas:            notas            || null,
         completada,
       }
       const res = await fetch(
-        isEdit ? `/api/actividades-tecnico/${actividad!.id}` : "/api/actividades-tecnico",
+        isEdit ? `/api/tecnico/actividades-tecnico/${actividad!.id}` : "/api/tecnico/actividades-tecnico",
         {
           method: isEdit ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
@@ -144,40 +173,24 @@ export default function AgregarActividadTecnicoForm({
       )
       const data = await res.json()
       if (!res.ok) { setError(data.error || "Error al guardar"); setSaving(false); return }
-      onSaved()
-      onClose()
+      onSaved(); onClose()
     } catch {
       setError("Error de conexión")
     }
     setSaving(false)
   }
 
-  // ── Campo de texto reutilizable ────────────────────────────────────────────
-  const Field = ({
-    id, label, value, onChange, type = "text", placeholder,
-  }: {
-    id: string; label: string; value: string; onChange: (v: string) => void
-    type?: string; placeholder?: string
-  }) => (
-    <div className={`gf-field ${focused === id ? "focused" : ""}`}>
-      <label className="gf-label">{label}</label>
-      <input
-        className="gf-input"
-        type={type}
-        placeholder={placeholder || label}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onFocus={() => setFocused(id)}
-        onBlur={() => setFocused(null)}
-      />
-    </div>
-  )
+  // Props compartidas para todos los FormField
+  const fp = {
+    focused,
+    onFocus: (id: string) => setFocused(id),
+    onBlur:  () => setFocused(null),
+  }
 
   return createPortal(
     <div className="gf-backdrop" onClick={onClose}>
       <div className="gf-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
 
-        {/* Corner decorations */}
         <div className="gf-corner tl" /><div className="gf-corner tr" />
         <div className="gf-corner bl" /><div className="gf-corner br" />
 
@@ -201,13 +214,13 @@ export default function AgregarActividadTecnicoForm({
         <div className="gf-body">
           <div className="gf-cols">
 
-            {/* ── COLUMNA 1 ── */}
+            {/* ══ COL 1 ══ */}
             <div>
               <div className="gf-section-label">Información General</div>
 
-              <Field id="tit" label="Título *" value={titulo} onChange={setTitulo} />
+              <FormField id="tit" label="Título *" value={titulo} onChange={setTitulo} {...fp} />
 
-              {/* Textarea descripción */}
+              {/* Textarea descripción — directamente, no como subcomponente */}
               <div className={`gf-field ${focused === "desc" ? "focused" : ""}`}>
                 <label className="gf-label">Descripción</label>
                 <textarea
@@ -260,25 +273,23 @@ export default function AgregarActividadTecnicoForm({
                 </div>
               </div>
 
-              {/* Checkbox completada — solo al editar */}
+              {/* Checkbox completada — solo editar */}
               {isEdit && (
                 <div className="gf-field" style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <input
                     type="checkbox"
-                    id="completada"
+                    id="cb-completada"
                     checked={completada}
                     onChange={e => setCompletada(e.target.checked)}
                     style={{ accentColor: "#00ffa3", width: 14, height: 14 }}
                   />
                   <label
-                    htmlFor="completada"
+                    htmlFor="cb-completada"
                     style={{
                       fontFamily: "'Share Tech Mono',monospace",
-                      fontSize: 9,
-                      letterSpacing: ".2em",
+                      fontSize: 9, letterSpacing: ".2em",
                       color: "var(--text2,#5c8fa8)",
-                      textTransform: "uppercase",
-                      cursor: "pointer",
+                      textTransform: "uppercase", cursor: "pointer",
                     }}
                   >
                     Marcar como completada
@@ -287,20 +298,21 @@ export default function AgregarActividadTecnicoForm({
               )}
             </div>
 
-            {/* ── COLUMNA 2 ── */}
+            {/* ══ COL 2 ══ */}
             <div>
               <div className="gf-section-label">Fecha y Hora</div>
 
-              <Field id="fec" label="Fecha *" value={fecha} onChange={setFecha} type="date" />
+              <FormField id="fec" label="Fecha *" value={fecha} onChange={setFecha} type="date" {...fp} />
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <Field id="hi" label="Hora inicio" value={horaInicio} onChange={setHoraInicio} type="time" />
-                <Field id="hf" label="Hora fin"    value={horaFin}    onChange={setHoraFin}    type="time" />
+                <FormField id="hi" label="Hora inicio" value={horaInicio} onChange={setHoraInicio} type="time" {...fp} />
+                <FormField id="hf" label="Hora fin"    value={horaFin}    onChange={setHoraFin}    type="time" {...fp} />
               </div>
 
               <div className="gf-section-label" style={{ marginTop: 6 }}>Ubicación</div>
-              <Field id="dir" label="Dirección"     value={direccion}     onChange={setDireccion} />
-              <Field id="cn"  label="Cliente en sitio" value={clienteNombre} onChange={setClienteNombre} />
+
+              <FormField id="dir" label="Dirección"        value={direccion}     onChange={setDireccion}     {...fp} />
+              <FormField id="cn"  label="Cliente en sitio" value={clienteNombre} onChange={setClienteNombre} {...fp} />
 
               <div className="gf-section-label" style={{ marginTop: 6 }}>Clasificación</div>
 
@@ -311,21 +323,18 @@ export default function AgregarActividadTecnicoForm({
                   {([1, 2, 3] as (1 | 2 | 3)[]).map(p => (
                     <button
                       key={p}
+                      type="button"
                       onClick={() => setPrioridad(p)}
                       style={{
-                        flex: 1,
-                        padding: "7px",
-                        borderRadius: 3,
+                        flex: 1, padding: "7px", borderRadius: 3,
                         border: `1px solid ${prioridad === p ? PRIO_CFG[p].color : "rgba(0,200,255,.12)"}`,
                         background: prioridad === p
                           ? `rgba(${p === 1 ? "255,59,92" : p === 2 ? "255,176,32" : "0,255,163"},0.07)`
                           : "transparent",
                         color: prioridad === p ? PRIO_CFG[p].color : "var(--text2,#5c8fa8)",
                         fontFamily: "'Share Tech Mono',monospace",
-                        fontSize: 8,
-                        letterSpacing: ".2em",
-                        textTransform: "uppercase",
-                        cursor: "pointer",
+                        fontSize: 8, letterSpacing: ".2em",
+                        textTransform: "uppercase", cursor: "pointer",
                         transition: "all .18s",
                       }}
                     >
@@ -351,7 +360,7 @@ export default function AgregarActividadTecnicoForm({
                 </div>
               </div>
 
-              {/* Notas */}
+              {/* Notas — textarea directamente */}
               <div className={`gf-field ${focused === "notas" ? "focused" : ""}`}>
                 <label className="gf-label">Notas internas</label>
                 <textarea
@@ -370,15 +379,10 @@ export default function AgregarActividadTecnicoForm({
           {/* Error */}
           {error && (
             <div style={{
-              fontFamily: "'Share Tech Mono',monospace",
-              fontSize: 9,
-              color: "#ff3b5c",
-              letterSpacing: ".15em",
-              padding: "6px 10px",
-              background: "rgba(255,59,92,0.06)",
-              border: "1px solid rgba(255,59,92,0.2)",
-              borderRadius: 3,
-              marginTop: 6,
+              fontFamily: "'Share Tech Mono',monospace", fontSize: 9,
+              color: "#ff3b5c", letterSpacing: ".15em",
+              padding: "6px 10px", background: "rgba(255,59,92,0.06)",
+              border: "1px solid rgba(255,59,92,0.2)", borderRadius: 3, marginTop: 6,
             }}>
               ● {error}
             </div>
@@ -387,26 +391,23 @@ export default function AgregarActividadTecnicoForm({
 
         {/* Footer */}
         <div className="gf-footer">
-          <button className="gf-btn gf-btn-cancel" onClick={onClose}>
-            Cancelar
-          </button>
+          <button className="gf-btn gf-btn-cancel" onClick={onClose}>Cancelar</button>
           <button
             className="gf-btn gf-btn-save"
             onClick={handleSave}
             disabled={saving}
             style={{ borderColor: "rgba(255,176,32,.4)", color: "#ffb020" }}
           >
-            {saving ? (
-              <><div className="gf-spinner" style={{ borderTopColor: "#ffb020" }} />Guardando...</>
-            ) : (
-              <>
-                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                  <path d="M1.5 5.5l3 3 5-5" stroke="currentColor" strokeWidth="1.4"
-                    strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {isEdit ? "Actualizar" : "Crear Actividad"}
-              </>
-            )}
+            {saving
+              ? <><div className="gf-spinner" style={{ borderTopColor: "#ffb020" }} />Guardando...</>
+              : <>
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                    <path d="M1.5 5.5l3 3 5-5" stroke="currentColor"
+                      strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {isEdit ? "Actualizar" : "Crear Actividad"}
+                </>
+            }
           </button>
         </div>
       </div>

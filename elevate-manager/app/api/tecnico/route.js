@@ -1,13 +1,17 @@
-// app/api/tecnicos/route.js
-// GET  → lista técnicos
-// POST → crea nuevo técnico
+// app/api/tecnico/route.js
+
+// NOTA: Si tu tabla usuarios NO tiene columna 'nombre', ejecuta primero:
+// ALTER TABLE usuarios ADD COLUMN nombre VARCHAR(200) DEFAULT NULL AFTER id;
+// ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(30) DEFAULT NULL;
+// ALTER TABLE usuarios ADD COLUMN face_enrollado BOOLEAN NOT NULL DEFAULT false;
+// ALTER TABLE usuarios ADD COLUMN face_descriptor JSON DEFAULT NULL;
 
 import { pool } from "@/lib/db"
 import { getUserFromToken } from "@/lib/auth"
 import bcrypt from "bcryptjs"
 
 // ─────────────────────────────────────────────
-// GET → LISTAR TÉCNICOS
+// GET → Obtener técnicos
 // ─────────────────────────────────────────────
 export async function GET() {
   try {
@@ -22,30 +26,35 @@ export async function GET() {
     }
 
     const [rows] = await pool.execute(`
-      SELECT id, nombre, email, telefono, estatus, face_enrollado,
-             ultimo_login, created_at, deleted_at
+      SELECT
+        id,
+        COALESCE(nombre, SUBSTRING_INDEX(email, '@', 1)) AS nombre,
+        email,
+        telefono,
+        estatus,
+        COALESCE(face_enrollado, false) AS face_enrollado,
+        ultimo_login,
+        created_at,
+        deleted_at
       FROM usuarios
       WHERE rol = 'tecnico'
         AND deleted_at IS NULL
       ORDER BY created_at DESC
     `)
 
-    return Response.json({
-      success: true,
-      data: rows,
-    })
-  } catch (error) {
-    console.error("GET tecnicos error:", error)
+    return Response.json({ success: true, data: rows })
 
+  } catch (e) {
+    console.error("GET tecnicos error:", e)
     return Response.json(
-      { error: "Error al obtener técnicos" },
+      { error: "Error al obtener técnicos", detail: e.message },
       { status: 500 }
     )
   }
 }
 
 // ─────────────────────────────────────────────
-// POST → CREAR TÉCNICO
+// POST → Crear técnico
 // ─────────────────────────────────────────────
 export async function POST(req) {
   try {
@@ -74,7 +83,7 @@ export async function POST(req) {
 
     // Verificar email único
     const [existing] = await pool.execute(
-      `SELECT id FROM usuarios WHERE email = ? LIMIT 1`,
+      `SELECT id FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`,
       [email]
     )
 
@@ -85,26 +94,23 @@ export async function POST(req) {
       )
     }
 
-    // Hash de contraseña
     const hash = await bcrypt.hash(password, 12)
 
-    // Insertar técnico
     const [result] = await pool.execute(
-      `INSERT INTO usuarios 
-       (nombre, email, password_hash, rol, telefono, estatus)
-       VALUES (?, ?, ?, 'tecnico', ?, 'activo')`,
+      `INSERT INTO usuarios (nombre, email, password_hash, rol, telefono, estatus, face_enrollado)
+       VALUES (?, ?, ?, 'tecnico', ?, 'activo', false)`,
       [nombre, email, hash, telefono || null]
     )
 
     return Response.json({
       success: true,
-      id: result.insertId,
+      id: result.insertId
     })
-  } catch (error) {
-    console.error("POST tecnicos error:", error)
 
+  } catch (e) {
+    console.error("POST tecnico error:", e)
     return Response.json(
-      { error: "Error al crear técnico" },
+      { error: "Error al crear técnico", detail: e.message },
       { status: 500 }
     )
   }
