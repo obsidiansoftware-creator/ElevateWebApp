@@ -21,14 +21,14 @@ export async function GET() {
       return Response.json({ error: "No permitido" }, { status: 403 })
     }
 
-    const [rows] = await pool.execute(
-      `SELECT id, nombre, email, telefono, estatus, face_enrollado,
-              ultimo_login, created_at, deleted_at
-       FROM usuarios
-       WHERE rol = 'tecnico'
-         AND deleted_at IS NULL
-       ORDER BY created_at DESC`
-    )
+    const [rows] = await pool.execute(`
+      SELECT id, nombre, email, telefono, estatus, face_enrollado,
+             ultimo_login, created_at, deleted_at
+      FROM usuarios
+      WHERE rol = 'tecnico'
+        AND deleted_at IS NULL
+      ORDER BY created_at DESC
+    `)
 
     return Response.json({
       success: true,
