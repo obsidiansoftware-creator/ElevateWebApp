@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import supabase from '@/lib/supabase';
-
 export const runtime = 'nodejs';
 
 export async function POST(req) {
